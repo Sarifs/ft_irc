@@ -1,0 +1,98 @@
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <unistd.h>
+#include <iostream>
+#include <cstring>
+
+int main(int ac, char **av)
+{
+    if (ac != 2 || !atoi(av[1]))
+        return 0;
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = htons(6667);
+
+    bind(server_fd, (struct sockaddr*)&addr, sizeof(addr));
+    listen(server_fd, 5);
+
+    fd_set master_set, read_set;
+    int max_fd = server_fd;
+    FD_ZERO(&master_set);
+    FD_SET(server_fd, &master_set);
+
+    int clients[FD_SETSIZE] = {0};
+
+    std::cout << "Serveur en écoute sur le port 6667...\n";
+
+    while (1)
+    {
+        read_set = master_set;
+        if (select(max_fd + 1, &read_set, nullptr, nullptr, nullptr) < 0)
+        {
+            perror("select");
+            break;
+        }
+
+        for (int fd = 0; fd <= max_fd; fd++)
+        {
+            if (FD_ISSET(fd, &read_set))
+            {
+                if (fd == server_fd)
+                {
+                    int client_fd = accept(server_fd, nullptr, nullptr);
+                    FD_SET(client_fd, &master_set);
+
+                    if (client_fd > max_fd)
+                        max_fd = client_fd;
+                    std::cout << "Nouveau client connecté : " << client_fd << "\n";
+                    send(client_fd, "Bienvenue sur le chat IRC !\n", 28, 0);
+                }
+                else
+                {
+                    char buffer[512];
+                    int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+                    if (bytes <= 0)
+                    {
+                        std::cout << "Client déconnecté : " << fd << "\n";
+                        close(fd);
+                        FD_CLR(fd, &master_set);
+                    }
+                    else
+                    {
+                        buffer[bytes] = '\0';
+                        std::cout << "Message du client " << fd << " : " << buffer;
+
+                        if (!strncmp(buffer, "NICK", 4))
+                            std::cout << "Client a changer son psedo." << std::endl;
+
+                        else if (!strncmp(buffer, "KICK", 4))
+                            std::cout << "Client a retirer quelqu'un" << std::endl;
+
+                        else if (!strncmp(buffer, "INVITE", 4))
+                            std::cout << "Client a invité quelqu'un" << std::endl;
+
+                        else if (!strncmp(buffer, "TOPIC", 4))
+                            std::cout << "Client a changer le theme." << std::endl;
+
+                        else if (!strncmp(buffer, "MODE", 4))
+                            std::cout << "Client a ouvert les parametre" << std::endl;
+
+                        else
+                        {
+                            for (int other_fd = 0; other_fd <= max_fd; other_fd++)
+                            if (FD_ISSET(other_fd, &master_set) && other_fd != server_fd && other_fd != fd)
+                            send(other_fd, buffer, bytes, 0);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    close(server_fd);
+}
