@@ -1,15 +1,11 @@
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <unistd.h>
-#include <iostream>
-#include <cstring>
+#include "Client.hpp"
 
 int main(int ac, char **av)
 {
     if (ac != 2 || !atoi(av[1]))
         return 0;
+
+    Client client[10];
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
 
     sockaddr_in addr{};
@@ -45,11 +41,12 @@ int main(int ac, char **av)
                 if (fd == server_fd)
                 {
                     int client_fd = accept(server_fd, nullptr, nullptr);
+                    client[fd].set_id(fd);
                     FD_SET(client_fd, &master_set);
 
                     if (client_fd > max_fd)
                         max_fd = client_fd;
-                    std::cout << "Nouveau client connecté : " << client_fd << "\n";
+                    std::cout << "Nouveau client connecté : " << client_fd << std::endl;
                     send(client_fd, "Bienvenue sur le chat IRC !\n", 28, 0);
                 }
                 else
@@ -58,17 +55,56 @@ int main(int ac, char **av)
                     int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
                     if (bytes <= 0)
                     {
-                        std::cout << "Client déconnecté : " << fd << "\n";
+                        std::cout << "Client déconnecté : " << fd << std::endl;
                         close(fd);
                         FD_CLR(fd, &master_set);
                     }
                     else
                     {
-                        buffer[bytes] = '\0';
-                        std::cout << "Message du client " << fd << " : " << buffer;
+                        buffer[bytes - 1] = '\0';
+                        std::cout << "Message du client " << client[fd].get_nickname() << " : " << buffer << std::endl;
 
-                        if (!strncmp(buffer, "NICK", 4))
-                            std::cout << "Client a changer son psedo." << std::endl;
+                        if (!strncmp(buffer, "EXIT ", 5))
+                        {
+                            send(fd, "vous vous etes deconecter !", 27, 0);
+                            std::cout << "Client déconnecté : " << fd << std::endl;
+                            close(fd);
+                            FD_CLR(fd, &master_set);
+                        }
+
+                        else if (!strncmp(buffer, "NICK ", 5))
+                        {
+                            send(fd, "vous avez changer de pseudo !\n", 30, 0);
+                            std::cout << "Client a changer son pseudo." << std::endl;
+                            client[fd].set_nickname(&buffer[5]);
+                        }
+                        
+                        else if (!strncmp(buffer, "USER ", 5))
+                        {
+                            send(fd, "vous avez changer de nom d'utilisateur !\n", 41, 0);
+                            std::cout << "Client a changer son nom d'utilisateur." << std::endl;
+                            client[fd].set_username(&buffer[5]);
+                        }
+                        
+                        else if (!strncmp(buffer, "JOIN ", 5))
+                        {
+                            if (client[fd].get_chanelname() != "void")
+                                std::cout << "Client a quitter le chanel." << std::endl;
+                            send(fd, "vous avez changer de canal !\n", 29, 0);
+                            client[fd].set_chanelname(&buffer[5]);
+                            std::cout << "Client a rejoins le chanel " << &buffer[5] << " ." << std::endl;
+                        }
+
+                        else if (!strncmp(buffer, "PART ", 5))
+                        {
+                            if (client[fd].get_chanelname() == "void")
+                            send(fd, "vous etes dans aucun chanel !\n", 30, 0);
+                            else
+                            {
+                                client[fd].set_chanelname("void");
+                                send(fd, "vous avez quitter le canal !\n", 29, 0);
+                            }
+                        }
 
                         else if (!strncmp(buffer, "KICK", 4))
                             std::cout << "Client a retirer quelqu'un" << std::endl;
