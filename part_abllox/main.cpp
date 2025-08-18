@@ -64,7 +64,7 @@ int main(int ac, char **av)
                         buffer[bytes - 1] = '\0';
                         std::cout << "Message du client " << client[fd].get_nickname() << " : " << buffer << std::endl;
 
-                        if (!strncmp(buffer, "EXIT ", 5))
+                        if (!strncmp(buffer, "EXIT", 4))
                         {
                             send(fd, "vous vous etes deconecter !", 27, 0);
                             std::cout << "Client déconnecté : " << fd << std::endl;
@@ -72,12 +72,18 @@ int main(int ac, char **av)
                             FD_CLR(fd, &master_set);
                         }
 
+                        else if (!strncmp(buffer, "PING", 4))
+                            send(fd, "PONG\n", 5, 0);
+
                         else if (!strncmp(buffer, "NICK ", 5))
                         {
                             send(fd, "vous avez changer de pseudo !\n", 30, 0);
                             std::cout << "Client a changer son pseudo." << std::endl;
                             client[fd].set_nickname(&buffer[5]);
                         }
+
+                        else if (client[fd].get_nickname() == "nickname")
+                            send(fd, "veuillier d'abord changer votre pseudo en utulisent la commande 'NICK' suivie de votre pseudo !\n", 96, 0);
                         
                         else if (!strncmp(buffer, "USER ", 5))
                         {
@@ -85,6 +91,9 @@ int main(int ac, char **av)
                             std::cout << "Client a changer son nom d'utilisateur." << std::endl;
                             client[fd].set_username(&buffer[5]);
                         }
+                        
+                        else if (client[fd].get_username() == "username")
+                            send(fd, "veuillier d'abord changer votre nom d'utilisateur en utulisent la commande 'USER' suivie de votre nom d'utilisateur !\n", 118, 0);
                         
                         else if (!strncmp(buffer, "JOIN ", 5))
                         {
@@ -95,6 +104,9 @@ int main(int ac, char **av)
                             std::cout << "Client a rejoins le chanel " << &buffer[5] << " ." << std::endl;
                         }
 
+                        else if (client[fd].get_chanelname() == "void")
+                            send(fd, "veuillier d'abord enter dans un salon en utulisent la commande 'JOIN' suivie de votre nom du salon !\n", 111, 0);
+                        
                         else if (!strncmp(buffer, "PART ", 5))
                         {
                             if (client[fd].get_chanelname() == "void")
@@ -121,8 +133,8 @@ int main(int ac, char **av)
                         else
                         {
                             for (int other_fd = 0; other_fd <= max_fd; other_fd++)
-                            if (FD_ISSET(other_fd, &master_set) && other_fd != server_fd && other_fd != fd)
-                            send(other_fd, buffer, bytes, 0);
+                                if (FD_ISSET(other_fd, &master_set) && client[other_fd].get_chanelname() == client[fd].get_chanelname() && other_fd != server_fd && other_fd != fd)
+                                    send(other_fd, buffer, bytes, 0);
                         }
                     }
                 }
