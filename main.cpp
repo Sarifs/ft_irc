@@ -1,21 +1,21 @@
-#include "Parsing.hpp"
+#include "include/Parsing.hpp"
 
 extern  IRCMessage  parseIRCMessage(const std::string& raw);
 
-// int main(){
-//     std::string input = ":Jean!~jean@localhost PRIVMSG #general : Salut tout le monde !\r\n";
+int main(){
+    std::string input = ":Jean!~jean@localhost PRIVMSG #general : Salut tout le monde !\r\n";
 
-//     IRCMessage msg = parseIRCMessage(input);
+    IRCMessage msg = parseIRCMessage(input);
 
-//     std::cout << "Prefix : " << msg.prefix << "\n";
-//     std::cout << "Command : " << msg.command << "\n";
-//     std::cout << "Params :\n";
-//     for (size_t i = 0; i < msg.params.size(); i++){
-//         std::cout << " [" << i << "] " << msg.params[i] << "\n";
-//     }
+    std::cout << "Prefix : " << msg.prefix << "\n";
+    std::cout << "Command : " << msg.command << "\n";
+    std::cout << "Params :\n";
+    for (size_t i = 0; i < msg.params.size(); i++){
+        std::cout << " [" << i << "] " << msg.params[i] << "\n";
+    }
 
-//     return 0;
-// }
+    return 0;
+}
 
 // int main() {
 //     // Simule une réponse PING
