@@ -1,29 +1,49 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.hpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
+/*   Updated: 2025/08/27 16:40:07 by marvin           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
+#pragma once
 
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
-
-#include <iostream>
-#include <string>
-#include <queue>
-//#include <thread>
-//#include <mutex>
-//#include <atomic>
-#include <sys/socket.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/select.h>
 #include <unistd.h>
+#include <iostream>
 #include <cstring>
-#include "Parsing.hpp"
 
-/* struct ClientState{
-    std::mutex      sendMutex;
-    std::queue<std::string>  sendQueue;
-    std::atomic<bool>   running{true};
-}; */
 
-// void    sendThread(int sock, ClientState& state);
-// int     conenctToServer(const std::string& host, int port);
-// void    receiveLoop(int sock, ClientState& state);
-// void    userInputLoop(ClientState&  state);
+class Client
+{
+private:
+    int id;
+    std::string nickname;
+    std::string username;
+    std::string chanelname;
+    bool modo;
+public:
+    Client();
+    ~Client();
 
-#endif
+    int get_id(void);
+    std::string get_username(void);
+    std::string get_nickname(void);
+    std::string get_chanelname(void);
+
+    void set_id(int string);
+    void set_username(std::string string);
+    void set_nickname(std::string string);
+    void set_chanelname(std::string string);
+
+    
+};
+
+void send_msg(std::string name, char *msg, int fd);

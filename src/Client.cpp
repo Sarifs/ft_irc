@@ -1,131 +1,80 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Client.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
+/*   Updated: 2025/08/27 17:21:39 by idioumas         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/Client.hpp"
 
-// void sendThread(int sock, ClientState& state) {
-//     while (state.running){
-//         std::string msg;
-//         {
-//             std::lock_guard<std::mutex> lock(state.sendMutex);
-//             if (!state.sendQueue.empty()){
-//                 msg = state.sendQueue.front();
-//                 state.sendQueue.pop();
-//             }
-//         }
+Client::Client() : id(0), nickname("nickname"), username("username"), chanelname("void") {}
 
-//         if (!msg.empty()){
-//             ssize_t sent = send(sock, msg.c_str(), msg.size(), 0);
-//             if (sent <= 0){
-//                 std::cerr << "Erreur d'envoi ou déconnexion serveur.\n";
-//                 state.running = false;
-//                 break;
-//             }
-//         }
-//         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//     }
-// }
+Client::~Client() {}
 
-// int     connectToServer(const std::string& host, int port){
-//     int sock = socket(AF_INET, SOCK_STREAM, 0);
-//     if (sock < 0){
-//         perror("socket");
-//         return -1;
-//     }
-//     sockaddr_in serv_addr{};
-//     serv_addr.sin_family = AF_INET;
-//     serv_addr.sin_port = htons(port);
-//     if (inet_pton(AF_INET, host.c_str(), &serv_addr.sin_addr) <= 0){
-//         perror("inet_pton");
-//         close(sock);
-//         return -1;
-//     }
-//     if (connect(sock, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
-//         perror("connect");
-//         close(sock);
-//         return -1;
-//     }
-//     return sock;
-// }
+ // getter
 
-// void    receiveLoop(int sock, ClientState& state){
-//     char buffer[512];
-//     std::string leftover;
+int Client::get_id(void)
+{
+    return id;
+}
 
-//     while (state.running){
-//         memset(buffer, 0, sizeof(buffer));
-//         int bytes = recv(sock, buffer, sizeof(buffer) - 1, 0);
-//         if (bytes <= 0){
-//             std::cout << "❌ Déconnecté du serveur.\n";
-//             state.running = false;
-//             break;
-//         }
-//         leftover += std::string(buffer, bytes);
+std::string Client::get_nickname(void)
+{
+    return nickname;
+}
 
-//         size_t pos;
-//         while ((pos = leftover.find("\r\n")) != std::string::npos){
-//             std::string line = leftover.substr(0, pos + 2);
-//             leftover.erase(0, pos + 2);
-//             try{
-//                 IRCMessage msg = parseIRCMessage(line);
-//                 handleIRCMessage(msg);
-//                 if (msg.command == "PING" && !msg.params.empty()) {
-//                     std::string pong = "PONG :" + msg.params[0] + "\r\n";
-//                     std::lock_guard<std::mutex> lock(state.sendMutex);
-//                     state.sendQueue.push(pong);
-//                 }
-//             } catch (const std::exception& e){
-//                 std::cerr << "Erreur parsing message IRC: " << e.what() << "\n";
-//             }
-//         }
-//     }
-// }
+std::string Client::get_username(void)
+{
+    return username;
+}
 
-// void    userInputLoop(ClientState& state){
-//     while (state.running){
-//         if (std::cin.peek() != EOF){
-//             std::string input;
-//             std::getline(std::cin, input);
-//             if (!input.empty()){
-//                 if (input == "/quit"){
-//                     std::lock_guard<std::mutex> lock(state.sendMutex);
-//                     state.sendQueue.push("QUIT: Leaving\r\n");
-//                     state.running = false;
-//                     break;
-//                 } else {
-//                     input += "\r\n";
-//                     std::lock_guard<std::mutex> lock(state.sendMutex);
-//                     state.sendQueue.push(input);
-//                 }
-//             }
-//         }
-//         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-//     }
-// }
+std::string Client::get_chanelname(void)
+{
+    return chanelname;
+}
 
-// int main() {
+ // setter
 
-//     ClientState state;
-//     int sock = connectToServer("127.0.0.1", 6667);
-//     if (sock < 0) return 1;
+void Client::set_id(int string)
+{
+    id = string;
+}
 
-//     std::cout << "✅ Connecté au serveur IRC.\n";
+void Client::set_nickname(std::string string)
+{
+    nickname = string;
+}
 
-//     {
-//         std::lock_guard<std::mutex> lock(state.sendMutex);
-//         state.sendQueue.push("NICK testnick\r\n");
-//         state.sendQueue.push("USER testuser 0 * :Real Name\r\n");
-//     }
+void Client::set_username(std::string string)
+{
+    username = string;
+}
 
-//     std::thread tRecv(receiveLoop, sock, std::ref(state));
-//     std::thread tSend(sendThread, sock, std::ref(state));
+void Client::set_chanelname(std::string string)
+{
+    chanelname = string;
+}
 
-//     userInputLoop(state);
+// ft utile
 
-//     state.running = false;
-//     tRecv.join();
-//     tSend.join();
+void send_msg(std::string name_s, char *msg, int fd)
+{
+    std::cout << "DEBUG (server): [" << name_s << "]" << std::endl;
 
-//     close(sock);
-//     std::cout << "Client fermé proprement.\n";
-//     return 0;
-// }
+    int sent = send(fd, name_s.c_str(), name_s.size(), 0);
+    if (sent == -1) std::cerr <<"send name" <<std::endl;
 
+    sent = send(fd, ": ", 2, 0);
+    if (sent == -1) std::cerr << "send sep" << std::endl;
 
+    sent = send(fd, msg, strlen(msg), 0);
+    if (sent == -1) std::cerr << "send msg" << std::endl;
+
+    sent = send(fd, "\r\n", 2, 0);
+    if (sent == -1) std::cerr << "send newline" << std::endl;
+}

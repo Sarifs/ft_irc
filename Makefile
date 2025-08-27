@@ -6,29 +6,28 @@
 #    By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/08/24 16:44:35 by idioumas          #+#    #+#              #
-#    Updated: 2025/08/24 16:51:13 by idioumas         ###   ########.fr        #
+#    Updated: 2025/08/27 17:28:20 by idioumas         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 # Nom de l'exécutable
-NAME = irc
+NAME = irc_server
 
 # Compilateur et options
 CXX = c++
 CXXFLAGS = -std=c++98 -Wall -Wextra -Werror -Iinclude
 
-# Sources (main + src/*.cpp)
+# Sources
 SRCS = main.cpp \
        src/Client.cpp \
-       src/parsing.cpp
 
-# Objets correspondants
+# Objets générés
 OBJS = $(SRCS:.cpp=.o)
 
-# Cible par défaut
+# Règle principale
 all: $(NAME)
 
-# Link final
+# Édition de liens
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $(OBJS)
 
@@ -36,7 +35,7 @@ $(NAME): $(OBJS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Nettoyage des .o
+# Nettoyage des objets
 clean:
 	rm -f $(OBJS)
 
@@ -44,11 +43,12 @@ clean:
 fclean: clean
 	rm -f $(NAME)
 
-# Recompilation totale
+# Recompilation complète
 re: fclean all
 
-# Lancer directement le programme
+# Lancer directement
 run: all
 	./$(NAME)
 
 .PHONY: all clean fclean re run
+
