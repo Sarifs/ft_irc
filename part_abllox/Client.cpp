@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/15 23:07:07 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/08/27 16:03:15 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,4 +58,23 @@ void Client::set_username(std::string string)
 void Client::set_chanelname(std::string string)
 {
     chanelname = string;
+}
+
+// ft utile
+
+void send_msg(std::string name_s, char *msg, int fd)
+{
+    std::cout << "DEBUG (server): [" << name_s << "]" << std::endl;
+
+    int sent = send(fd, name_s.c_str(), name_s.size(), 0);
+    if (sent == -1) perror("send name");
+
+    sent = send(fd, ": ", 2, 0);
+    if (sent == -1) perror("send sep");
+
+    sent = send(fd, msg, strlen(msg), 0);
+    if (sent == -1) perror("send msg");
+
+    sent = send(fd, "\r\n", 2, 0);
+    if (sent == -1) perror("send newline");
 }

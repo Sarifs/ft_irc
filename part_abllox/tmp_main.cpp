@@ -133,8 +133,8 @@ int main(int ac, char **av)
                         else
                         {
                             for (int other_fd = 0; other_fd <= max_fd; other_fd++)
-                                if (FD_ISSET(other_fd, &master_set) && client[other_fd].get_chanelname() == client[fd].get_chanelname() && other_fd != server_fd && other_fd != fd)
-                                    send(other_fd, buffer, bytes, 0);
+                                if (FD_ISSET(other_fd, &master_set) && client[other_fd].get_chanelname() == client[other_fd].get_chanelname() && other_fd != server_fd && other_fd != fd)
+                                    send_msg(client[fd].get_nickname(), buffer, other_fd);
                         }
                     }
                 }

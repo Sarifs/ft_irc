@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/15 22:27:56 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/08/27 16:17:42 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,8 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstring>
+
+#include "IRC_Serveur.hpp"
 
 class Client
 {
@@ -43,7 +45,9 @@ public:
     void set_nickname(std::string string);
     void set_chanelname(std::string string);
 
+    
 };
 
+void send_msg(std::string name, char *msg, int fd);
 
 #endif
