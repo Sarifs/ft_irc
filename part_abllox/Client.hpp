@@ -6,12 +6,11 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/27 16:17:42 by marvin           ###   ########.fr       */
+/*   Updated: 2025/08/27 16:40:07 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
+#pragma once
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -21,7 +20,6 @@
 #include <iostream>
 #include <cstring>
 
-#include "IRC_Serveur.hpp"
 
 class Client
 {
@@ -49,5 +47,3 @@ public:
 };
 
 void send_msg(std::string name, char *msg, int fd);
-
-#endif
