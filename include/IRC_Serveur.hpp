@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   IRC_Serveur.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/27 13:24:03 by idioumas          #+#    #+#             */
-/*   Updated: 2025/08/27 16:57:25 by idioumas         ###   ########.fr       */
+/*   Updated: 2025/08/27 18:16:36 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,10 +75,9 @@ IRC_Serveur::IRC_Serveur(int port)
     std::cout << "Serveur IRC en écoute sur le port " << port << "..." << std::endl;
 }
 
-
 void IRC_Serveur::run()
 {
-    Client client[10];
+    Client client[10000];
     
     fd_set master_set, read_set;
     int max_fd = this->fd_server;
@@ -119,6 +118,7 @@ void IRC_Serveur::run()
                         close(fd);
                         FD_CLR(fd, &master_set);
                     }
+                    // apprelle le parece de momo
                     else
                     {
                         buffer[bytes - 1] = '\0';
@@ -189,7 +189,6 @@ void IRC_Serveur::run()
 
                         else if (!strncmp(buffer, "MODE", 4))
                             std::cout << "Client a ouvert les parametre" << std::endl;
-
                         else
                         {
                             for (int other_fd = 0; other_fd <= max_fd; other_fd++)
