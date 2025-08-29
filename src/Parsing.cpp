@@ -1,4 +1,4 @@
-#include "../includes/Parsing.hpp"
+#include "Parsing.hpp"
 
 IRCMessage  parseIRCMessage(const std::string& rawInput){
     IRCMessage  msg;
@@ -30,7 +30,7 @@ IRCMessage  parseIRCMessage(const std::string& rawInput){
                 param += " " + rest;
             msg.params.push_back(param);
             break;
-        } else{
+        } else {
             msg.params.push_back(token);
         }
     }
@@ -83,10 +83,47 @@ void    handleIRCMessage(const IRCMessage& msg){
             std::cout << msg.prefix << " changed topic on " << msg.params[0] << " to: " << msg.params[1] << "\n";
         }
     } else if (cmd == "MODE"){
-        std::cout << msg.prefix << " set mode ";
-        for (std::vector<std::string>::const_iterator it = msg.params.begin(); it != msg.params.end(); it++)
-            std::cout << *it << " ";
-        std::cout << "\n";
+        if (msg.params.size() >= 2){
+            std::string target = msg.params[0];
+            std::string modes = msg.params[1];
+
+            std::cout << msg.prefix << " set mode on " << target << ": " << modes << "\n";
+            bool    adding = true;
+            for (size_t i = 0; i < modes.size(); i++){
+                char c = modes[i];
+            if (c == '+'){
+                adding = true;
+            } else if (c == '-') {
+                adding = false;
+            }
+            else {
+                std::string action = adding ? "enabled": "disabled";
+                std::string description;
+
+                switch (c){
+                    case 'i':
+                        description = "Invite-only channel";
+                        break;
+                    case 't':
+                        description = "Only channel operators can change the topic";
+                        break;
+                    case 'k':
+                        description = "Channel key (password) required to join";
+                        break;
+                    case 'o':
+                        description = "Give/take channel operator privileges";
+                        break;
+                    case 'l':
+                        description = "Set/remove user limit";
+                        break;
+                    default:
+                        description = "Unknown mode";
+                        break;
+                }
+                std::cout << " Mode '" << c << "' " << action << ": " << description << "\n";
+            }
+            }
+        }
     } else if (cmd == "001"){
         if (!msg.params.empty())
             std::cout << "Connected: " << msg.params.back() << "\n";
