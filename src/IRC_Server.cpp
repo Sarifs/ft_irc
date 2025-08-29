@@ -11,7 +11,37 @@
 /* ************************************************************************** */
 
 #include "../include/IRC_Serveur.hpp"
+#include "../include/Chanel.hpp"
 
+enum Command {
+    CMD_EXIT,
+    CMD_PING,
+    CMD_NICK,
+    CMD_USER,
+    CMD_JOIN,
+    CMD_PART,
+    CMD_PRIVMSG,
+    CMD_KICK,
+    CMD_INVITE,
+    CMD_TOPIC,
+    CMD_MODE,
+    CMD_UNKNOWN
+};
+
+Command parse_command(const char *buffer) {
+    if (!strncmp(buffer, "EXIT", 4)) return CMD_EXIT;
+    if (!strncmp(buffer, "PING", 4)) return CMD_PING;
+    if (!strncmp(buffer, "NICK", 4)) return CMD_NICK;
+    if (!strncmp(buffer, "USER", 4)) return CMD_USER;
+    if (!strncmp(buffer, "JOIN", 4)) return CMD_JOIN;
+    if (!strncmp(buffer, "PART", 4)) return CMD_PART;
+    if (!strncmp(buffer, "PRIVMSG", 7)) return CMD_PRIVMSG;
+    if (!strncmp(buffer, "KICK", 4)) return CMD_KICK;
+    if (!strncmp(buffer, "INVITE", 6)) return CMD_INVITE;
+    if (!strncmp(buffer, "TOPIC", 5)) return CMD_TOPIC;
+    if (!strncmp(buffer, "MODE", 4)) return CMD_MODE;
+    return CMD_UNKNOWN;
+}
 
 IRC_Serveur::IRC_Serveur(int port)
 {
@@ -51,7 +81,8 @@ IRC_Serveur::IRC_Serveur(int port)
 void IRC_Serveur::run()
 {
     Client client[10000];
-    
+    Chanel chanel("test" , "modo");
+
     fd_set master_set, read_set;
     int max_fd = this->fd_server;
     FD_ZERO(&master_set);
@@ -97,73 +128,109 @@ void IRC_Serveur::run()
                         buffer[bytes - 1] = '\0';
                         std::cout << "Message du client " << client[fd].get_nickname() << " : " << buffer << std::endl;
 
-                        if (!strncmp(buffer, "EXIT", 4))
-                        {
-                            send(fd, "vous vous etes deconecter !", 27, 0);
-                            std::cout << "Client déconnecté : " << fd << std::endl;
-                            close(fd);
-                            FD_CLR(fd, &master_set);
-                        }
+                        Command cmd = parse_command(buffer);
 
-                        else if (!strncmp(buffer, "PING", 4))
-                            send(fd, "PONG\n", 5, 0);
+                        switch (cmd) {
+                            case CMD_EXIT:
+                                send(fd, "vous vous etes deconecter !", 27, 0);
+                                std::cout << "Client déconnecté : " << fd << std::endl;
+                                close(fd);
+                                FD_CLR(fd, &master_set);
+                                break;
 
-                        else if (!strncmp(buffer, "NICK ", 5))
-                        {
-                            send(fd, "vous avez changer de pseudo !\n", 30, 0);
-                            std::cout << "Client a changer son pseudo." << std::endl;
-                            client[fd].set_nickname(&buffer[5]);
-                        }
+                            case CMD_PING:
+                                send(fd, "PONG\n", 5, 0);
+                                break;
 
-                        else if (client[fd].get_nickname() == "nickname")
-                            send(fd, "veuillier d'abord changer votre pseudo en utulisent la commande 'NICK' suivie de votre pseudo !\n", 96, 0);
-                        
-                        else if (!strncmp(buffer, "USER ", 5))
-                        {
-                            send(fd, "vous avez changer de nom d'utilisateur !\n", 41, 0);
-                            std::cout << "Client a changer son nom d'utilisateur." << std::endl;
-                            client[fd].set_username(&buffer[5]);
-                        }
-                        
-                        else if (client[fd].get_username() == "username")
-                            send(fd, "veuillier d'abord changer votre nom d'utilisateur en utulisent la commande 'USER' suivie de votre nom d'utilisateur !\n", 118, 0);
-                        
-                        else if (!strncmp(buffer, "JOIN ", 5))
-                        {
-                            if (client[fd].get_chanelname() != "void")
-                                std::cout << "Client a quitter le chanel." << std::endl;
-                            send(fd, "vous avez changer de canal !\n", 29, 0);
-                            client[fd].set_chanelname(&buffer[5]);
-                            std::cout << "Client a rejoins le chanel " << &buffer[5] << " ." << std::endl;
-                        }
+                            case CMD_NICK:
+                                send(fd, "vous avez changer de pseudo !\n", 30, 0);
+                                client[fd].set_nickname(&buffer[5]);
+                                break;
 
-                        else if (!strncmp(buffer, "PART ", 5))
-                        {
-                            if (client[fd].get_chanelname() == "void")
-                            send(fd, "vous etes dans aucun chanel !\n", 30, 0);
-                            else
+                            case CMD_USER:
+                                send(fd, "vous avez changer de nom d'utilisateur !\n", 41, 0);
+                                client[fd].set_username(&buffer[5]);
+                                break;
+
+                            case CMD_JOIN:
                             {
-                                client[fd].set_chanelname("void");
-                                send(fd, "vous avez quitter le canal !\n", 29, 0);
+                                std::string test = chanel.get_name();
+                                if (!strncmp(&buffer[5], test.c_str() , 4))
+                                {
+                                    std::vector<std::string> user = chanel.get_user();
+                                    for (size_t i = 0; i < user.size(); i++)
+                                    {
+                                        if (client[fd].get_username() == user[i])
+                                        {
+                                            std::cout << "il est dans la liste des user du chanel" << std::endl;
+                                        }
+                                        else if (i + 1 == user.size())
+                                        {
+                                            std::cout << "je l'ajoute dans la liste des user du chanel" << std::endl;
+                                            chanel.add_user(client[fd].get_username());
+                                        }
+                                    }
+                                }
+                                else
+                                    std::cout << "chanel introuvable : " << &buffer[5] << "|" << std::endl;
+                                break;
                             }
-                        }
 
-                        else if (!strncmp(buffer, "KICK", 4))
-                            std::cout << "Client a retirer quelqu'un" << std::endl;
+                            case CMD_PART:
+                            {
+                                std::string test = chanel.get_name();
+                                if (!strncmp(&buffer[5], test.c_str() , 4))
+                                {
+                                    std::vector<std::string> user = chanel.get_user();
+                                    for (size_t i = 0; i < user.size(); i++)
+                                    {
+                                        if (client[fd].get_username() == user[i])
+                                        {
+                                            std::cout << "je vous sort de la liste des user du chanel" << std::endl;
+                                            chanel.del_user(client[fd].get_username());
+                                        }
+                                        else if (i + 1 == user.size())
+                                            std::cout << "vous etes pas dans la liste des user du chanel" << std::endl;
+                                    }
+                                }
+                                else
+                                    std::cout << "chanel introuvable : " << &buffer[5] << "|" << std::endl;
+                                break;
+                            }
 
-                        else if (!strncmp(buffer, "INVITE", 4))
-                            std::cout << "Client a invité quelqu'un" << std::endl;
+                            case CMD_PRIVMSG:
+                                if (buffer[8] == '#')
+                                    std::cout << "message sur un canal" << std::endl;
+                                else
+                                    std::cout << "message privé" << std::endl;
+                                break;
 
-                        else if (!strncmp(buffer, "TOPIC", 4))
-                            std::cout << "Client a changer le theme." << std::endl;
+                            case CMD_KICK:
+                                std::cout << "Client a retirer quelqu'un" << std::endl;
+                                break;
 
-                        else if (!strncmp(buffer, "MODE", 4))
-                            std::cout << "Client a ouvert les parametre" << std::endl;
-                        else
-                        {
-                            for (int other_fd = 0; other_fd <= max_fd; other_fd++)
-                                if (FD_ISSET(other_fd, &master_set) && client[other_fd].get_chanelname() == client[other_fd].get_chanelname() && other_fd != this->fd_server && other_fd != fd)
-                                    send_msg(client[fd].get_nickname(), buffer, other_fd);
+                            case CMD_INVITE:
+                                std::cout << "Client a invité quelqu'un" << std::endl;
+                                break;
+
+                            case CMD_TOPIC:
+                                std::cout << "Client a changer le theme." << std::endl;
+                                break;
+
+                            case CMD_MODE:
+                                std::cout << "Client a ouvert les parametres" << std::endl;
+                                break;
+
+                            case CMD_UNKNOWN:
+                                for (int other_fd = 0; other_fd <= max_fd; other_fd++) {
+                                    if (FD_ISSET(other_fd, &master_set) &&
+                                        client[other_fd].get_chanelname() == client[fd].get_chanelname() &&
+                                        other_fd != this->fd_server && other_fd != fd)
+                                    {
+                                        send_msg(client[fd].get_nickname(), buffer, other_fd);
+                                    }
+                                }
+                                break;
                         }
                     }
                 }
@@ -171,7 +238,8 @@ void IRC_Serveur::run()
         }
     }
     close(this->fd_server);
-}    
+}
+
 IRC_Serveur::~IRC_Serveur()
 {
     std::cout << "test destruction" <<std::endl;   
