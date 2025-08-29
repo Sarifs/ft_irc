@@ -104,7 +104,7 @@ void IRC_Serveur::run()
                 if (fd == this->fd_server)
                 {
                     int client_fd = accept(this->fd_server, NULL, NULL);
-                    client[fd].set_id(fd);
+                    client[fd].set_id(client_fd);
                     FD_SET(client_fd, &master_set);
 
                     if (client_fd > max_fd)
@@ -143,14 +143,40 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_NICK:
-                                send(fd, "vous avez changer de pseudo !\n", 30, 0);
-                                client[fd].set_nickname(&buffer[5]);
+                            {
+                                std::string nick(&buffer[5]);
+                                nick.erase(nick.find_last_not_of(" \r\n") + 1); // nettoie la fin
+                                
+                                if (nick.empty())
+                                {
+                                    send(fd, "Erreur: pseudo invalide\n", 25, 0);
+                                }
+                                else
+                                {
+                                    client[fd].set_nickname(nick);
+                                    send(fd, "vous avez changer de pseudo !\n", 30, 0);
+                                    std::cout << "Client " << fd << " a changé son pseudo en: " << nick << std::endl;
+                                }
                                 break;
+                            }
 
                             case CMD_USER:
-                                send(fd, "vous avez changer de nom d'utilisateur !\n", 41, 0);
-                                client[fd].set_username(&buffer[5]);
+                            {
+                                std::string user(&buffer[5]);
+                                user.erase(user.find_last_not_of(" \r\n") + 1); // nettoie la fin
+                                
+                                if (user.empty())
+                                {
+                                    send(fd, "Erreur: pseudo invalide\n", 25, 0);
+                                }
+                                else
+                                {
+                                    client[fd].set_username(user);
+                                    send(fd, "vous avez changer de pseudo !\n", 30, 0);
+                                    std::cout << "Client " << fd << " a changé son pseudo en: " << user << std::endl;
+                                }
                                 break;
+                            }
 
                             case CMD_JOIN:
                             {
@@ -199,11 +225,46 @@ void IRC_Serveur::run()
                             }
 
                             case CMD_PRIVMSG:
+                            {
                                 if (buffer[8] == '#')
+                                {
+                                    std::vector<std::string> users = chanel.get_user();
+
+                                    for (size_t i = 0; i < users.size(); i++)
+                                    {
+                                        if (client[fd].get_username() == users[i])
+                                        {
+                                            for (int other_fd = 0; other_fd <= max_fd; other_fd++)
+                                            {
+                                                for (size_t j = 0; j < users.size(); j++)
+                                                {
+                                                    if (client[other_fd].get_username() == users[j] && other_fd != fd)
+                                                    {
+                                                        send_msg(client[fd].get_username(), &buffer[13], other_fd);
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            break;
+                                        }
+                                    }
                                     std::cout << "message sur un canal" << std::endl;
+                                }
                                 else
+                                {
+                                    for (int other_fd = 0; other_fd <= max_fd; other_fd++)
+                                    {
+                                        std::string name = client[other_fd].get_nickname();
+                                        if (!strncmp(&buffer[8], name.c_str(), name.size()))
+                                        {
+                                            send_msg(client[fd].get_username(), &buffer[name.size() + 9], other_fd);
+                                        }
+                                    }
                                     std::cout << "message privé" << std::endl;
+                                }
                                 break;
+                            }
+
 
                             case CMD_KICK:
                                 std::cout << "Client a retirer quelqu'un" << std::endl;
