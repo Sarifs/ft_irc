@@ -68,7 +68,7 @@ void Chanel::del_modo(std::string name)
 {
     for (size_t i = 0; i < modo.size(); i++) {
         if(name == modo[i])
-            modo[i] = "\0";
+            modo.erase(modo.begin() + i);
     }
 }
 
@@ -76,6 +76,6 @@ void Chanel::del_user(std::string name)
 {
     for (size_t i = 0; i < user.size(); i++) {
         if(name == user[i])
-            user[i] = "\0";
+            user.erase(user.begin() + i);
     }
 }

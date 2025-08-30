@@ -241,7 +241,6 @@ void IRC_Serveur::run()
                                     std::cout << "chanel introuvable : " << &buffer[5] << "|" << std::endl;
                                 break;
                             }
-
                             /*case CMD_PRIVMSG:
                             {
                                 if (buffer[8] == '#')
