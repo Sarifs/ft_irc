@@ -1,4 +1,4 @@
-#include "Parsing.hpp"
+#include "../include/Parsing.hpp"
 
 IRCMessage  parseIRCMessage(const std::string& rawInput){
     IRCMessage  msg;

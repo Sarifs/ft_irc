@@ -12,6 +12,7 @@
 
 #include "../include/IRC_Serveur.hpp"
 #include "../include/Chanel.hpp"
+#include "../include/Parsing.hpp"
 
 enum Command {
     CMD_EXIT,
@@ -20,7 +21,7 @@ enum Command {
     CMD_USER,
     CMD_JOIN,
     CMD_PART,
-    CMD_PRIVMSG,
+    //CMD_PRIVMSG,
     CMD_KICK,
     CMD_INVITE,
     CMD_TOPIC,
@@ -35,7 +36,7 @@ Command parse_command(const char *buffer) {
     if (!strncmp(buffer, "USER", 4)) return CMD_USER;
     if (!strncmp(buffer, "JOIN", 4)) return CMD_JOIN;
     if (!strncmp(buffer, "PART", 4)) return CMD_PART;
-    if (!strncmp(buffer, "PRIVMSG", 7)) return CMD_PRIVMSG;
+    //if (!strncmp(buffer, "PRIVMSG", 7)) return CMD_PRIVMSG;
     if (!strncmp(buffer, "KICK", 4)) return CMD_KICK;
     if (!strncmp(buffer, "INVITE", 6)) return CMD_INVITE;
     if (!strncmp(buffer, "TOPIC", 5)) return CMD_TOPIC;
@@ -80,11 +81,14 @@ IRC_Serveur::IRC_Serveur(int port)
 
 void IRC_Serveur::run()
 {
-    Client client[10000];
+    std::vector<Client> clients;
     Chanel chanel("test" , "modo");
 
     fd_set master_set, read_set;
+
     int max_fd = this->fd_server;
+    Client srvr(this->fd_server);
+    clients.push_back(srvr);
     FD_ZERO(&master_set);
     FD_SET(this->fd_server, &master_set);
     
@@ -97,14 +101,23 @@ void IRC_Serveur::run()
             break;
         }
 
-        for (int fd = 0; fd <= max_fd; fd++)
+        for (size_t i = 0; i < clients.size(); i++)
         {
-            if (FD_ISSET(fd, &read_set))
+            if (FD_ISSET(clients[i].get_fd_client(), &read_set))
             {
-                if (fd == this->fd_server)
+                if (clients[i].get_fd_client() == this->fd_server)
                 {
                     int client_fd = accept(this->fd_server, NULL, NULL);
-                    client[fd].set_id(client_fd);
+                    if (client_fd >= 0)
+                    {                        
+                        Client new_client(client_fd);
+                        clients.push_back(new_client);
+                    }
+                    else if (client_fd < 0) 
+                    {
+                        std::cout << "Error accepte"<<std::endl;
+                    }
+                    //client[fd].set_id(client_fd);
                     FD_SET(client_fd, &master_set);
 
                     if (client_fd > max_fd)
@@ -115,31 +128,36 @@ void IRC_Serveur::run()
                 else
                 {
                     char buffer[512];
-                    int bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+                    int bytes = recv(clients[i].get_fd_client(), buffer, sizeof(buffer) - 1, 0);
                     if (bytes <= 0)
                     {
-                        std::cout << "Client déconnecté : " << fd << std::endl;
-                        close(fd);
-                        FD_CLR(fd, &master_set);
+                        std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
+                        close(clients[i].get_fd_client());
+                        FD_CLR(clients[i].get_fd_client(), &master_set);
                     }
-                    // apprelle le parece de momo
                     else
                     {
                         buffer[bytes - 1] = '\0';
-                        std::cout << "Message du client " << client[fd].get_nickname() << " : " << buffer << std::endl;
+                        /*Checking parsing */
+                        std::cout << "Debut du parsing" << std::endl;
+                        std::string ircmsg = buffer;
+                        handleIRCMessage(parseIRCMessage(ircmsg));
+                        std::cout << "Fin du parsing" << std::endl;
+                        /***************** */
+                        std::cout << "Message du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
 
                         Command cmd = parse_command(buffer);
 
                         switch (cmd) {
                             case CMD_EXIT:
-                                send(fd, "vous vous etes deconecter !", 27, 0);
-                                std::cout << "Client déconnecté : " << fd << std::endl;
-                                close(fd);
-                                FD_CLR(fd, &master_set);
+                                send(clients[i].get_fd_client(), "vous vous etes deconecter !", 27, 0);
+                                std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
+                                close(clients[i].get_fd_client());
+                                FD_CLR(clients[i].get_fd_client(), &master_set);
                                 break;
 
                             case CMD_PING:
-                                send(fd, "PONG\n", 5, 0);
+                                send(clients[i].get_fd_client(), "PONG\n", 5, 0);
                                 break;
 
                             case CMD_NICK:
@@ -149,13 +167,13 @@ void IRC_Serveur::run()
                                 
                                 if (nick.empty())
                                 {
-                                    send(fd, "Erreur: pseudo invalide\n", 25, 0);
+                                    send(clients[i].get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
                                 }
                                 else
                                 {
-                                    client[fd].set_nickname(nick);
-                                    send(fd, "vous avez changer de pseudo !\n", 30, 0);
-                                    std::cout << "Client " << fd << " a changé son pseudo en: " << nick << std::endl;
+                                    clients[i].set_nickname(nick);
+                                    send(clients[i].get_fd_client(), "vous avez changer de pseudo !\n", 30, 0);
+                                    std::cout << "Client " << clients[i].get_fd_client() << " a changé son pseudo en: " << nick << std::endl;
                                 }
                                 break;
                             }
@@ -167,13 +185,13 @@ void IRC_Serveur::run()
                                 
                                 if (user.empty())
                                 {
-                                    send(fd, "Erreur: pseudo invalide\n", 25, 0);
+                                    send(clients[i].get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
                                 }
                                 else
                                 {
-                                    client[fd].set_username(user);
-                                    send(fd, "vous avez changer de pseudo !\n", 30, 0);
-                                    std::cout << "Client " << fd << " a changé son pseudo en: " << user << std::endl;
+                                    clients[i].set_username(user);
+                                    send(clients[i].get_fd_client(), "vous avez changer de pseudo !\n", 30, 0);
+                                    std::cout << "Client " << clients[i].get_fd_client() << " a changé son pseudo en: " << user << std::endl;
                                 }
                                 break;
                             }
@@ -186,14 +204,14 @@ void IRC_Serveur::run()
                                     std::vector<std::string> user = chanel.get_user();
                                     for (size_t i = 0; i < user.size(); i++)
                                     {
-                                        if (client[fd].get_username() == user[i])
+                                        if (clients[i].get_username() == user[i])
                                         {
                                             std::cout << "il est dans la liste des user du chanel" << std::endl;
                                         }
                                         else if (i + 1 == user.size())
                                         {
                                             std::cout << "je l'ajoute dans la liste des user du chanel" << std::endl;
-                                            chanel.add_user(client[fd].get_username());
+                                            chanel.add_user(clients[i].get_username());
                                         }
                                     }
                                 }
@@ -210,10 +228,10 @@ void IRC_Serveur::run()
                                     std::vector<std::string> user = chanel.get_user();
                                     for (size_t i = 0; i < user.size(); i++)
                                     {
-                                        if (client[fd].get_username() == user[i])
+                                        if (clients[i].get_username() == user[i])
                                         {
                                             std::cout << "je vous sort de la liste des user du chanel" << std::endl;
-                                            chanel.del_user(client[fd].get_username());
+                                            chanel.del_user(clients[i].get_username());
                                         }
                                         else if (i + 1 == user.size())
                                             std::cout << "vous etes pas dans la liste des user du chanel" << std::endl;
@@ -224,7 +242,7 @@ void IRC_Serveur::run()
                                 break;
                             }
 
-                            case CMD_PRIVMSG:
+                            /*case CMD_PRIVMSG:
                             {
                                 if (buffer[8] == '#')
                                 {
@@ -232,13 +250,13 @@ void IRC_Serveur::run()
 
                                     for (size_t i = 0; i < users.size(); i++)
                                     {
-                                        if (client[fd].get_username() == users[i])
+                                        if (clients[i].get_username() == users[i])
                                         {
                                             for (int other_fd = 0; other_fd <= max_fd; other_fd++)
                                             {
                                                 for (size_t j = 0; j < users.size(); j++)
                                                 {
-                                                    if (client[other_fd].get_username() == users[j] && other_fd != fd)
+                                                    if (clients[other_fd].get_username() == users[j] && other_fd != fd)
                                                     {
                                                         send_msg(client[fd].get_username(), &buffer[13], other_fd);
                                                         break;
@@ -263,7 +281,7 @@ void IRC_Serveur::run()
                                     std::cout << "message privé" << std::endl;
                                 }
                                 break;
-                            }
+                            }*/
 
 
                             case CMD_KICK:
@@ -283,14 +301,15 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_UNKNOWN:
-                                for (int other_fd = 0; other_fd <= max_fd; other_fd++) {
+                                std::cout << "Unknown commande"<<std::endl;
+                                /*for (int other_fd = 0; other_fd <= max_fd; other_fd++) {
                                     if (FD_ISSET(other_fd, &master_set) &&
                                         client[other_fd].get_chanelname() == client[fd].get_chanelname() &&
                                         other_fd != this->fd_server && other_fd != fd)
                                     {
                                         send_msg(client[fd].get_nickname(), buffer, other_fd);
                                     }
-                                }
+                                }*/
                                 break;
                         }
                     }

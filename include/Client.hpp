@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/27 16:40:07 by marvin           ###   ########.fr       */
+/*   Updated: 2025/08/30 15:16:54 by idioumas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,19 +25,20 @@ class Client
 {
 private:
     int id;
+    int fd;
     std::string nickname;
     std::string username;
     std::string chanelname;
     bool modo;
 public:
-    Client();
+    Client(int fd_client);
     ~Client();
 
     int get_id(void);
     std::string get_username(void);
     std::string get_nickname(void);
     std::string get_chanelname(void);
-
+    int get_fd_client(void);
     void set_id(int string);
     void set_username(std::string string);
     void set_nickname(std::string string);

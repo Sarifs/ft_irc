@@ -3,16 +3,21 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/29 18:50:34 by marvin           ###   ########.fr       */
+/*   Updated: 2025/08/30 15:31:37 by idioumas         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Client.hpp"
 
-Client::Client() : id(0), nickname("nickname"), username("username"), chanelname("void") {}
+
+Client::Client(int fd_client): fd(fd_client){
+    
+    
+}
+//Client::Client() : id(0), nickname("nickname"), username("username"), chanelname("void") {}
 
 Client::~Client() {}
 
@@ -45,21 +50,26 @@ void Client::set_id(int string)
     id = string;
 }
 
-void Client::set_nickname(std::string string)
+void Client::set_nickname(std::string nickname)
 {
-    nickname = string;
+    nickname = nickname;
 }
 
-void Client::set_username(std::string string)
+void Client::set_username(std::string username)
 {
-    username = string;
+    username = username;
 }
 
-void Client::set_chanelname(std::string string)
+void Client::set_chanelname(std::string chanel_name)
 {
-    chanelname = string;
+    this->chanelname = chanel_name;
 }
 
+
+int Client::get_fd_client(void)
+{
+    return this->fd;
+}
 // ft utile
 
 void send_msg(std::string name_s, char *msg, int fd)
