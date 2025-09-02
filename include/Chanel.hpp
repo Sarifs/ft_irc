@@ -19,7 +19,8 @@ class Chanel
 {
 private:
     std::string name;
-    std::vector<std::string> user;
+    // std::string theame;
+    std::vector<std::string> user; // a changer par vector client 
     std::vector<std::string> conv;
     std::vector<std::string> modo;
 

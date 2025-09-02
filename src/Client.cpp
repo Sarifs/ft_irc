@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/30 15:31:37 by idioumas         ###   ########.fr       */
+/*   Updated: 2025/08/31 15:12:01 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,12 +52,12 @@ void Client::set_id(int string)
 
 void Client::set_nickname(std::string nickname)
 {
-    nickname = nickname;
+    this->nickname = nickname;
 }
 
 void Client::set_username(std::string username)
 {
-    username = username;
+    this->username = username;
 }
 
 void Client::set_chanelname(std::string chanel_name)
@@ -76,15 +76,11 @@ void send_msg(std::string name_s, char *msg, int fd)
 {
     std::cout << "DEBUG (server): [" << name_s << "]" << std::endl;
 
-    int sent = send(fd, name_s.c_str(), name_s.size(), 0);
-    if (sent == -1) std::cerr <<"send name" <<std::endl;
+    send(fd, name_s.c_str(), name_s.size(), 0);
 
-    sent = send(fd, ": ", 2, 0);
-    if (sent == -1) std::cerr << "send sep" << std::endl;
+    send(fd, ": ", 2, 0);
 
-    sent = send(fd, msg, strlen(msg), 0);
-    if (sent == -1) std::cerr << "send msg" << std::endl;
+    send(fd, msg, strlen(msg), 0);
 
-    sent = send(fd, "\r\n", 2, 0);
-    if (sent == -1) std::cerr << "send newline" << std::endl;
+    send(fd, "\r\n", 2, 0);
 }
