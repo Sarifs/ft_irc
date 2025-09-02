@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: idioumas <idioumas@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/30 15:16:54 by idioumas         ###   ########.fr       */
+/*   Updated: 2025/09/02 19:03:59 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ private:
     std::string nickname;
     std::string username;
     std::string chanelname;
-    bool modo;
 public:
     Client(int fd_client);
     ~Client();

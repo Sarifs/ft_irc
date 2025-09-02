@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/08/31 15:12:01 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/02 18:52:53 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,6 @@
 
 
 Client::Client(int fd_client): fd(fd_client){
-    
-    
 }
 //Client::Client() : id(0), nickname("nickname"), username("username"), chanelname("void") {}
 
@@ -74,7 +72,6 @@ int Client::get_fd_client(void)
 
 void send_msg(std::string name_s, char *msg, int fd)
 {
-    std::cout << "DEBUG (server): [" << name_s << "]" << std::endl;
 
     send(fd, name_s.c_str(), name_s.size(), 0);
 
