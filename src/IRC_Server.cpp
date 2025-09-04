@@ -30,17 +30,17 @@ enum Command {
 };
 
 Command parse_command(const char *buffer) {
-    if (!strncmp(buffer, "EXIT", 4)) return CMD_EXIT;
-    if (!strncmp(buffer, "PING", 4)) return CMD_PING;
-    if (!strncmp(buffer, "NICK", 4)) return CMD_NICK;
-    if (!strncmp(buffer, "USER", 4)) return CMD_USER;
-    if (!strncmp(buffer, "JOIN", 4)) return CMD_JOIN;
-    if (!strncmp(buffer, "PART", 4)) return CMD_PART;
-    if (!strncmp(buffer, "PRIVMSG", 7)) return CMD_PRIVMSG;
-    if (!strncmp(buffer, "KICK", 4)) return CMD_KICK;
-    if (!strncmp(buffer, "INVITE", 6)) return CMD_INVITE;
-    if (!strncmp(buffer, "TOPIC", 5)) return CMD_TOPIC;
-    if (!strncmp(buffer, "MODE", 4)) return CMD_MODE;
+    if (!strcmp(buffer, "EXIT")) return CMD_EXIT;
+    if (!strcmp(buffer, "PING")) return CMD_PING;
+    if (!strcmp(buffer, "NICK")) return CMD_NICK;
+    if (!strcmp(buffer, "USER")) return CMD_USER;
+    if (!strcmp(buffer, "JOIN")) return CMD_JOIN;
+    if (!strcmp(buffer, "PART")) return CMD_PART;
+    if (!strcmp(buffer, "PRIVMSG")) return CMD_PRIVMSG;
+    if (!strcmp(buffer, "KICK")) return CMD_KICK;
+    if (!strcmp(buffer, "INVITE")) return CMD_INVITE;
+    if (!strcmp(buffer, "TOPIC")) return CMD_TOPIC;
+    if (!strcmp(buffer, "MODE")) return CMD_MODE;
     return CMD_UNKNOWN;
 }
 
@@ -115,10 +115,7 @@ void IRC_Serveur::run()
                         clients.push_back(new_client);
                     }
                     else if (client_fd < 0) 
-                    {
                         std::cout << "Error accepte"<<std::endl;
-                    }
-                    //client[fd].set_id(client_fd);
                     FD_SET(client_fd, &master_set);
 
                     if (client_fd > max_fd)
@@ -142,17 +139,17 @@ void IRC_Serveur::run()
                         std::cout << "Debut du parsing" << std::endl;
                         std::string ircmsg = buffer;
                         IRC = parseIRCMessage(ircmsg);
-                        std::cout << "\n\n\n" << std::endl;
-                        std::cout << IRC.command << "<__CMD" << std::endl;
+                        std::cout << "\n" << std::endl;
+                        std::cout << IRC.command << " <--CMD" << std::endl;
                         for (size_t i = 0; i < IRC.params.size(); i++)
-                            std::cout << IRC.params[i] << "<--param" << std::endl;
-                        std::cout << IRC.prefix << "<--prefix" << std::endl;
-                        std::cout << "\n\n\n" << std::endl;
+                            std::cout << IRC.params[i] << " <--param" << std::endl;
+                        std::cout << IRC.prefix << " <--prefix" << std::endl;
+                        std::cout << "\n" << std::endl;
 
                         std::cout << "Fin du parsing" << std::endl;
-                        std::cout << "Message du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
+                        std::cout << "commande du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
 
-                        Command cmd = parse_command(buffer);
+                        Command cmd = parse_command(IRC.command.c_str());
 
                         switch (cmd) {
                             case CMD_EXIT:
@@ -160,6 +157,7 @@ void IRC_Serveur::run()
                                 std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
                                 close(clients[i].get_fd_client());
                                 FD_CLR(clients[i].get_fd_client(), &master_set);
+                                // supp le client du vector
                                 break;
 
                             case CMD_PING:
@@ -167,102 +165,22 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_NICK:
-                            {
-                                std::string nick(&buffer[5]);
-                                nick.erase(nick.find_last_not_of(" \r\n") + 1); // nettoie la fin
-                                
-                                if (nick.empty())
-                                {
-                                    send(clients[i].get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
-                                }
-                                else
-                                {
-                                    clients[i].set_nickname(nick);
-                                    send(clients[i].get_fd_client(), "vous avez changer de pseudo !\n", 30, 0);
-                                    std::cout << "Client " << clients[i].get_fd_client() << " a changé son pseudo en: " << nick << std::endl;
-                                }
+                                change_nickname(clients, IRC.params[0], i);
                                 break;
-                            }
 
                             case CMD_USER:
-                            {
-                                if (clients[i].get_username() != "")
-                                {
-                                    send(clients[i].get_fd_client(), "vous ne pouver pas changer de username !\n", 41, 0);
-                                    break;
-                                }
-                                std::string user(&buffer[5]);
-                                user.erase(user.find_last_not_of(" \r\n") + 1);
-                                
-                                if (user.empty())
-                                    send(clients[i].get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
-                                else
-                                {
-                                    for (size_t j = 0; j < clients.size(); j++)
-                                    {
-                                        if (clients[j].get_username() == user)
-                                        {
-                                            send(clients[i].get_fd_client(), "cette username est deja utiliser !\n", 35, 0);
-                                            user = "";
-                                            break;
-                                        }
-                                    }
-                                    if (user == "")
-                                        break;
-                                    clients[i].set_username(user);
-                                    send(clients[i].get_fd_client(), "vous avez changer de pseudo !\n", 30, 0);
-                                    std::cout << "Client " << clients[i].get_fd_client() << " a changé son pseudo en: " << user << std::endl;
-                                }
+                                change_username(clients[i], IRC.params[0]);
                                 break;
-                            }
 
                             case CMD_JOIN:
-                            {
-                                std::string test = chanel.get_name();
-                                if (!strncmp(&buffer[5], test.c_str() , 4))
-                                {
-                                    std::vector<std::string> user = chanel.get_user();
-                                    for (size_t j = 0; j < user.size(); j++)
-                                    {
-                                        if (clients[i].get_username() == user[j])
-                                        {
-                                            std::cout << "il est dans la liste des user du chanel" << std::endl;
-                                        }
-                                        else if (j + 1 == user.size())
-                                        {
-                                            std::cout << "je l'ajoute dans la liste des user du chanel" << std::endl;
-                                            chanel.add_user(clients[i].get_username());
-                                        }
-                                    }
-                                }
-                                else
-                                    std::cout << "chanel introuvable : " << &buffer[5] << "|" << std::endl;
+                                join_chanel(clients[i], chanel, IRC.params[0]);
                                 break;
-                            }
 
                             case CMD_PART:
-                            {
-                                std::string test = chanel.get_name();
-                                if (!strncmp(&buffer[5], test.c_str() , 4))
-                                {
-                                    std::vector<std::string> user = chanel.get_user();
-                                    for (size_t j = 0; j < user.size(); j++)
-                                    {
-                                        if (clients[i].get_username() == user[j])
-                                        {
-                                            std::cout << "je vous sort de la liste des user du chanel" << std::endl;
-                                            chanel.del_user(clients[i].get_username());
-                                        }
-                                        else if (j + 1 == user.size())
-                                            std::cout << "vous etes pas dans la liste des user du chanel" << std::endl;
-                                    }
-                                }
-                                else
-                                    std::cout << "chanel introuvable : " << &buffer[5] << "|" << std::endl;
+                                part_chanel(clients[i], chanel, IRC.params[0]);
                                 break;
-                            }
 
-                            case CMD_PRIVMSG:
+                            case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
                             {
                                 if (buffer[8] == '#')
                                 {
@@ -304,42 +222,20 @@ void IRC_Serveur::run()
                             }
 
                            case CMD_KICK:
-                            {
-                                std::string test = chanel.get_name();
-                                if (!strncmp(&buffer[6], test.c_str() , 4))
+                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
                                 {
-                                    std::vector<std::string> modo = chanel.get_modo();
-                                    for (size_t j = 0; j < modo.size(); j++)
-                                    {
-                                        if (clients[i].get_username() == modo[j])
-                                        {
-                                            chanel.del_user("del");
-                                            std::cout << "Client a retirer quelqu'un" << std::endl;
-                                        }
-                                    }
+                                    chanel.del_user("del");
+                                    std::cout << "Client a retirer quelqu'un" << std::endl;
                                 }
                                 break;
-                            }
 
                             case CMD_INVITE:
-                             {
-                                std::string test = chanel.get_name();
-                                if (!strncmp(&buffer[8], test.c_str() , 4))
+                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
                                 {
-                                    std::vector<std::string> modo = chanel.get_modo();
-                                    for (size_t j = 0; j < modo.size(); j++)
-                                    {
-                                        if (clients[i].get_username() == modo[j])
-                                        {
-                                            chanel.add_user("nouveau");
-                                            std::cout << "Client a invité quelqu'un" << std::endl;
-                                        }
-                                    }
+                                    chanel.add_user("nouveau");
+                                    std::cout << "Client a invité quelqu'un" << std::endl;
                                 }
                                 break;
-                            }
-                                break;
-
                             case CMD_TOPIC:
                                 std::cout << "Client a changer le theme." << std::endl;
                                 break;
@@ -348,7 +244,7 @@ void IRC_Serveur::run()
                                 std::cout << "Client a ouvert les parametres" << std::endl;
                                 break;
 
-                            case CMD_UNKNOWN: // a supp
+                            case CMD_UNKNOWN: // a supp mais reste present pour les test d'envoie de message
                                 // std::cout << "Unknown commande"<<std::endl;
                                 for (int other_fd = 0; other_fd <= max_fd; other_fd++) {
                                     if (FD_ISSET(other_fd, &master_set) &&

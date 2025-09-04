@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/02 19:03:59 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/04 19:40:45 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,9 @@
 #include <unistd.h>
 #include <iostream>
 #include <cstring>
+#include <vector>
 
+class Chanel;
 
 class Client
 {
@@ -46,4 +48,14 @@ public:
     
 };
 
+void change_nickname(std::vector<Client>& clients, std::string user, int i);
+
+void change_username(Client &clients, std::string user);
+
+void join_chanel(Client &client, Chanel &chanel, const std::string &name);
+
+void part_chanel(Client &client, Chanel &chanel, const std::string &name);
+
 void send_msg(std::string name, char *msg, int fd);
+
+bool check_modo(Chanel chanel, std::string c_name , std::string name);
