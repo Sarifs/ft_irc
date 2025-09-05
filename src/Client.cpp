@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/04 19:40:49 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/05 17:49:38 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,14 +71,25 @@ int Client::get_fd_client(void)
 }
 // ft utile
 
-void send_msg(std::string name_s, char *msg, int fd)
+void send_msg(Client Client, std::vector<std::string> msg, int fd)
 {
+    send(fd, ":", 1, 0);
+        
+    send(fd, Client.get_nickname().c_str(), Client.get_nickname().size(), 0);
+    
+    send(fd, "!", 1, 0);
+    
+    send(fd, Client.get_username().c_str(), Client.get_username().size(), 0);
+    
+    send(fd, "@127.0.0.1", 10, 0);
+    
+    send(fd, " : ", 3, 0);
 
-    send(fd, name_s.c_str(), name_s.size(), 0);
-
-    send(fd, ": ", 2, 0);
-
-    send(fd, msg, strlen(msg), 0);
+    for (size_t i = 1; i < msg.size(); i++)
+    {
+        send(fd, msg[i].c_str(), strlen(msg[i].c_str()), 0);
+        send(fd, " ", 1, 0);
+    }
 
     send(fd, "\r\n", 2, 0);
 }
@@ -140,7 +151,7 @@ void join_chanel(Client &client, Chanel &chanel, const std::string &name)
         {
             if (users[i] == client.get_username())
             {
-                send(client.get_fd_client(), "Vous êtes déjà dans ce channel !\n", 35, 0);
+                send(client.get_fd_client(), "Vous êtes déjà dans ce channel !\n", 33, 0);
                 return;
             }
         }
@@ -179,6 +190,16 @@ void part_chanel(Client &client, Chanel &chanel, const std::string &name)
         send(client.get_fd_client(), "Channel introuvable !\n", 23, 0);
         std::cout << "Channel introuvable : " << name << std::endl;
     }
+}
+
+void privmsg(std::vector<Client> clients, std::string dest, std::vector<std::string> msg, Client client)
+{
+    for (size_t i = 0; i < clients.size(); i++)
+    {
+        if (clients[i].get_nickname() == dest)
+            send_msg(client, msg, clients[i].get_fd_client());
+    }
+    
 }
 
 bool check_modo(Chanel chanel, std::string c_name , std::string name)
