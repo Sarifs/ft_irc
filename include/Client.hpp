@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/05 17:50:01 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/07 15:37:59 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,25 +26,27 @@ class Chanel;
 class Client
 {
 private:
-    int id;
     int fd;
+    std::string ip;
     std::string nickname;
     std::string username;
     std::string chanelname;
+    bool authenticated;
 public:
-    Client(int fd_client);
+    Client(int fd_client, char *ip);
     ~Client();
 
-    int get_id(void);
+    std::string get_ip(void);
     std::string get_username(void);
     std::string get_nickname(void);
     std::string get_chanelname(void);
     int get_fd_client(void);
-    void set_id(int string);
     void set_username(std::string string);
     void set_nickname(std::string string);
     void set_chanelname(std::string string);
 
+    bool is_authenticated();
+    void set_authenticated(bool value);
     
 };
 
@@ -56,9 +58,10 @@ void join_chanel(Client &client, Chanel &chanel, const std::string &name);
 
 void part_chanel(Client &client, Chanel &chanel, const std::string &name);
 
-void send_msg(Client Client, std::vector<std::string> msg, int fd);
-
-void privmsg(std::vector<Client> clients, std::string dest, std::vector<std::string> msg, Client client);
+void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client);
 
 bool check_modo(Chanel chanel, std::string c_name , std::string name);
 
+void send_msg(Client Client, std::vector<std::string> msg, int fd, std::string cmd);
+
+void send_prefix(Client Client, int fd);

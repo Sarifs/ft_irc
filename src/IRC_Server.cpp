@@ -17,6 +17,8 @@
 enum Command {
     CMD_EXIT,
     CMD_PING,
+    CMD_PASS,
+    CMD_NOPASS,
     CMD_NICK,
     CMD_NONICK,
     CMD_NOUSER,
@@ -33,15 +35,14 @@ enum Command {
 
 Command parse_command(const char *buffer, Client client)
 {
-    std::string nick = client.get_nickname();
-    std::string user = client.get_username();
-
     if (!strcmp(buffer, "EXIT")) return CMD_EXIT;
     if (!strcmp(buffer, "PING")) return CMD_PING;
+    if (!strcmp(buffer, "PASS")) return CMD_PASS;
+    if (client.is_authenticated() == false) return CMD_NOPASS;
     if (!strcmp(buffer, "NICK")) return CMD_NICK;
-    if (!strcmp(nick.c_str(), "")) return CMD_NONICK;
+    if (!strcmp(client.get_nickname().c_str(), "")) return CMD_NONICK;
     if (!strcmp(buffer, "USER")) return CMD_USER;
-    if (!strcmp(user.c_str(), "")) return CMD_NOUSER;
+    if (!strcmp(client.get_username().c_str(), "")) return CMD_NOUSER;
     if (!strcmp(buffer, "JOIN")) return CMD_JOIN;
     if (!strcmp(buffer, "PART")) return CMD_PART;
     if (!strcmp(buffer, "PRIVMSG")) return CMD_PRIVMSG;
@@ -52,7 +53,7 @@ Command parse_command(const char *buffer, Client client)
     return CMD_UNKNOWN;
 }
 
-IRC_Serveur::IRC_Serveur(int port)
+IRC_Serveur::IRC_Serveur(int port, std::string pass) : passwold(pass)
 {
     /* Socket creation */
     this->fd_server = socket(AF_INET,SOCK_STREAM,0);
@@ -87,6 +88,12 @@ IRC_Serveur::IRC_Serveur(int port)
     std::cout << "Serveur IRC en écoute sur le port " << port << "..." << std::endl;
 }
 
+std::string IRC_Serveur::get_password()
+{
+    return passwold;
+}
+
+
 void IRC_Serveur::run()
 {
     IRCMessage IRC;
@@ -95,8 +102,12 @@ void IRC_Serveur::run()
 
     fd_set master_set, read_set;
 
+    struct sockaddr_in address;
+    socklen_t addrlen = sizeof(address);
     int max_fd = this->fd_server;
-    Client srvr(this->fd_server);
+    char ip[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
+    Client srvr(this->fd_server, ip);
     clients.push_back(srvr);
     FD_ZERO(&master_set);
     FD_SET(this->fd_server, &master_set);
@@ -116,10 +127,15 @@ void IRC_Serveur::run()
             {
                 if (clients[i].get_fd_client() == this->fd_server)
                 {
-                    int client_fd = accept(this->fd_server, NULL, NULL);
+                    int client_fd = accept(this->fd_server, (struct sockaddr*)&address, &addrlen);
                     if (client_fd >= 0)
-                    {                        
-                        Client new_client(client_fd);
+                    {                       
+                        char ip[INET_ADDRSTRLEN];
+                        inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
+ 
+                        Client new_client(client_fd, ip);
+                        std::cout << new_client.get_ip() << " <--get this ip" << std::endl;
+
                         clients.push_back(new_client);
                     }
                     else if (client_fd < 0) 
@@ -155,13 +171,14 @@ void IRC_Serveur::run()
                         std::cout << "\n" << std::endl;
 
                         std::cout << "Fin du parsing" << std::endl;
+                        std::cout << clients[i].get_ip() << " <--get this ip" << std::endl;
                         std::cout << "commande du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
 
                         Command cmd = parse_command(IRC.command.c_str(), clients[i]);
 
                         switch (cmd) {
                             case CMD_EXIT:
-                                send(clients[i].get_fd_client(), "vous vous etes deconecter !", 27, 0);
+                                send(clients[i].get_fd_client(), "vous vous etes deconecter !\n", 28, 0);
                                 std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
                                 close(clients[i].get_fd_client());
                                 FD_CLR(clients[i].get_fd_client(), &master_set);
@@ -170,6 +187,25 @@ void IRC_Serveur::run()
 
                             case CMD_PING:
                                 send(clients[i].get_fd_client(), "PONG\n", 5, 0);
+                                break;
+
+                            case CMD_PASS:
+                            {
+                                std::string pass = IRC.params[0];
+                                
+                                if (pass == this->get_password()) {
+                                    clients[i].set_authenticated(true);
+                                    send(clients[i].get_fd_client(), "Mot de passe correct, vous pouvez continuer.\n", 45, 0);
+                                } else {
+                                    send(clients[i].get_fd_client(), "Mot de passe incorrect, connexion fermee.\n", 42, 0);
+                                    close(clients[i].get_fd_client());
+                                    FD_CLR(clients[i].get_fd_client(), &master_set);
+                                }
+                                break;
+                            }
+
+                            case CMD_NOPASS:
+                                send(clients[i].get_fd_client(), "Vous devez d'abord entrer le mot de passe avec PASS.\n", 53, 0);
                                 break;
 
                             case CMD_NICK:
@@ -197,7 +233,7 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
-                                privmsg(clients, IRC.params[0], IRC.params, clients[i]);
+                                privmsg(clients, IRC.params, clients[i]);
                                 break;
 
                            case CMD_KICK:
@@ -219,7 +255,7 @@ void IRC_Serveur::run()
                             case CMD_TOPIC:
                                 if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
                                 {
-                                    std::cout << "Client a changer le theme." << std::endl;
+                                    std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
                                 }
                                 break;
 
