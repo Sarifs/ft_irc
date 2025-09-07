@@ -19,8 +19,7 @@ class Chanel
 {
 private:
     std::string name;
-    // std::string theame;
-    std::vector<std::string> user; // a changer par vector client 
+    std::vector<std::string> user;
     std::vector<std::string> conv;
     std::vector<std::string> modo;
 
@@ -46,3 +45,5 @@ public:
     void del_user(std::string name);
     void del_modo(std::string name);
 };
+
+Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, std::string user);

@@ -98,7 +98,7 @@ void IRC_Serveur::run()
 {
     IRCMessage IRC;
     std::vector<Client> clients;
-    Chanel chanel("test" , "modo");
+    std::vector<Chanel> chanels;
 
     fd_set master_set, read_set;
 
@@ -225,46 +225,65 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_JOIN:
-                                join_chanel(clients[i], chanel, IRC.params[0]);
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], true, clients[i].get_username());
+                                join_chanel(clients[i], chanel_tmp);
                                 break;
+                            }
 
                             case CMD_PART:
-                                part_chanel(clients[i], chanel, IRC.params[0]);
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
+                                part_chanel(clients[i], chanel_tmp, IRC.params[0]);
                                 break;
+                            }
 
                             case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
                                 privmsg(clients, IRC.params, clients[i]);
                                 break;
 
                            case CMD_KICK:
-                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
+                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
                                 {
-                                    chanel.del_user(IRC.params[1]);
+                                    chanel_tmp->del_user(IRC.params[1]);
                                     std::cout << "Client a retirer quelqu'un" << std::endl;
                                 }
                                 break;
-
+                            }
+                                
                             case CMD_INVITE:
-                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
+                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
                                 {
-                                    chanel.add_user(IRC.params[1]);
+                                    chanel_tmp->add_user(IRC.params[1]);
                                     std::cout << "Client a invité quelqu'un" << std::endl;
                                 }
                                 break;
+                            }
 
                             case CMD_TOPIC:
-                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
+                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
                                 {
                                     std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
                                 }
                                 break;
+                            }
 
                             case CMD_MODE:
-                                if (check_modo(chanel, IRC.params[0], clients[i].get_username()))
+                            {
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
+                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
                                 {
-                                    std::cout << "Client a ouvert les parametres" << std::endl; 
+                                   // cmd_mode();
+                                    std::cout << "Client a ouvert les parametres" << std::endl;
                                 }
                                 break;
+                            }
 
                             case CMD_UNKNOWN: // a supp mais reste present pour les test d'envoie de message
                                 std::cout << "Unknown commande"<<std::endl;

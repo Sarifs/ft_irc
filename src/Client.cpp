@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/07 15:32:17 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/08 01:18:30 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,54 +168,47 @@ void change_username(Client &clients, std::string user) // a refaire
     }
 }
 
-void join_chanel(Client &client, Chanel &chanel, const std::string &name)
+void join_chanel(Client &client, Chanel *chanel)
 {
-    if (chanel.get_name() == name)
+    std::vector<std::string> users = chanel->get_user();
+
+    for (size_t i = 0; i < users.size(); i++)
     {
-        std::vector<std::string> users = chanel.get_user();
-
-        for (size_t i = 0; i < users.size(); i++)
+        if (users[i] == client.get_username())
         {
-            if (users[i] == client.get_username())
-            {
-                send(client.get_fd_client(), "Vous êtes déjà dans ce channel !\n", 33, 0);
-                return;
-            }
+            send(client.get_fd_client(), "Vous êtes déjà dans ce channel !\n", 35, 0);
+            return;
         }
-
-        chanel.add_user(client.get_username());
-        send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 33, 0);
     }
-    else
-        send(client.get_fd_client(), "Channel introuvable !\n", 23, 0);
+
+    chanel->add_user(client.get_username());
+    send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
 }
 
-void part_chanel(Client &client, Chanel &chanel, const std::string &name)
+void part_chanel(Client &client, Chanel *chanel, const std::string &name)
 {
-    if (chanel.get_name() == name)
-    {
-        std::vector<std::string> users = chanel.get_user();
-
-        for (size_t i = 0; i < users.size(); i++)
-        {
-            if (client.get_username() == users[i])
-            {
-                chanel.del_user(client.get_username());
-                // send_msg au groupe que tu quitte
-                send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
-                std::cout << "Client " << client.get_username() << " a quitté le channel " << name << std::endl;
-                return;
-            }
-        }
-
-        send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
-        std::cout << "Client " << client.get_username() << " a essayé de quitter " << name << " sans y être.\n";
-    }
-    else
+    if (!chanel)
     {
         send(client.get_fd_client(), "Channel introuvable !\n", 23, 0);
         std::cout << "Channel introuvable : " << name << std::endl;
+        return ;
     }
+    std::vector<std::string> users = chanel->get_user();
+
+    for (size_t i = 0; i < users.size(); i++)
+    {
+        if (client.get_username() == users[i])
+        {
+            chanel->del_user(client.get_username());
+            // send_msg au groupe que tu quitte
+            send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
+            std::cout << "Client " << client.get_username() << " a quitté le channel " << name << std::endl;
+            return;
+        }
+    }
+
+    send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
+    std::cout << "Client " << client.get_username() << " a essayé de quitter " << name << " sans y être.\n";
 }
 
 void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client)
@@ -228,11 +221,11 @@ void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client c
     
 }
 
-bool check_modo(Chanel chanel, std::string c_name , std::string name)
+bool check_modo(Chanel *chanel, std::string c_name , std::string name)
 {
-    if (chanel.get_name() == c_name)
+    if (chanel->get_name() == c_name)
     {
-        std::vector<std::string> modo = chanel.get_modo();
+        std::vector<std::string> modo = chanel->get_modo();
         for (size_t j = 0; j < modo.size(); j++)
         {
             if (name == modo[j])

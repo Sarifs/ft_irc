@@ -82,3 +82,24 @@ void Chanel::del_user(std::string name)
         std::cout << user[i] << std::endl;
     }
 }
+
+// utiles
+
+Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, std::string user)
+{
+    for (size_t i = 0; i < chanels.size(); i++)
+    {
+        if (chanels[i].get_name() == name) {
+            return &chanels[i];
+        }
+    }
+
+    if (create)
+    {
+        std::cout << "nouveau chanel cree" << std::endl;
+        chanels.push_back(Chanel(name, user));
+        return &chanels.back();
+    }
+
+    return NULL;
+}

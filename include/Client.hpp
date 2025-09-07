@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/07 15:37:59 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/08 01:19:03 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,14 +54,16 @@ void change_nickname(std::vector<Client>& clients, std::string user, int i);
 
 void change_username(Client &clients, std::string user);
 
-void join_chanel(Client &client, Chanel &chanel, const std::string &name);
+void join_chanel(Client &client, Chanel *chanel);
 
-void part_chanel(Client &client, Chanel &chanel, const std::string &name);
+void part_chanel(Client &client, Chanel *chanel, const std::string &name);
 
 void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client);
 
-bool check_modo(Chanel chanel, std::string c_name , std::string name);
+bool check_modo(Chanel *chanel, std::string c_name , std::string name);
 
 void send_msg(Client Client, std::vector<std::string> msg, int fd, std::string cmd);
 
 void send_prefix(Client Client, int fd);
+
+void cmd_mode(std::string param, Chanel chanel, std::vector<std::string> plus);
