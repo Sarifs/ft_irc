@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/08 01:18:30 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/08 03:06:12 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -211,8 +211,19 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
     std::cout << "Client " << client.get_username() << " a essayé de quitter " << name << " sans y être.\n";
 }
 
-void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client)
+void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels)
 {
+    if (msg[0][0] == '#')
+    {
+        const char *name = msg[0].c_str();
+        for (size_t i = 0; i < chanels.size(); i++)
+        {
+            if (!strcmp(&name[1], chanels[i].get_name().c_str()))
+                send_in_chanel(clients, msg, client, chanels[i]);
+        }
+        return ;
+    }
+    
     for (size_t i = 0; i < clients.size(); i++)
     {
         if (clients[i].get_nickname() == msg[0])
@@ -234,4 +245,25 @@ bool check_modo(Chanel *chanel, std::string c_name , std::string name)
     }
     // send ":server 482 <nick> #channel :You're not channel operator"
     return false;
+}
+
+void send_in_chanel(std::vector<Client> clients, std::vector<std::string> msg, Client client, Chanel chanel)
+{
+    std::vector<std::string> user = chanel.get_user();
+    for (size_t i = 0; i < user.size(); i++)
+    {
+        if (client.get_nickname() == user[i])
+        {
+            for (size_t j = 0; j < clients.size(); j++)
+            {
+                for (size_t k = 0; k < user.size(); k++)
+                {
+                    if (user[k] == clients[j].get_nickname() && user[k] != client.get_nickname())
+                        send_msg(client, msg, clients[j].get_fd_client(), "PRIVMSG");
+                }
+            }
+            return ;
+        }
+    }
+    send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
 }

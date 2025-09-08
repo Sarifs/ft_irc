@@ -239,7 +239,7 @@ void IRC_Serveur::run()
                             }
 
                             case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
-                                privmsg(clients, IRC.params, clients[i]);
+                                privmsg(clients, IRC.params, clients[i], chanels);
                                 break;
 
                            case CMD_KICK:
