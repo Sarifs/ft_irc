@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/08 02:24:55 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/08 17:09:06 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,9 +56,9 @@ void change_username(Client &clients, std::string user);
 
 void join_chanel(Client &client, Chanel *chanel);
 
-void part_chanel(Client &client, Chanel *chanel, const std::string &name);
+void part_chanel(Client &client, Chanel *chanel, const std::string &name, std::vector<Client>& clients);
 
-void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels);
+void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels, std::string cmd);
 
 bool check_modo(Chanel *chanel, std::string c_name , std::string name);
 
@@ -69,3 +69,5 @@ void send_prefix(Client Client, int fd);
 void cmd_mode(std::string param, Chanel chanel, std::vector<std::string> plus);
 
 void send_in_chanel(std::vector<Client> clients, std::vector<std::string> msg, Client client, Chanel chanel);
+
+void send_action(Client client, int fd, std::string cmd, std::string dest, std::string msg);

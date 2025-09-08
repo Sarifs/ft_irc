@@ -97,6 +97,7 @@ std::string IRC_Serveur::get_password()
 void IRC_Serveur::run()
 {
     IRCMessage IRC;
+    IRC = parseIRCMessage("test 1 2 3 .");
     std::vector<Client> clients;
     std::vector<Chanel> chanels;
 
@@ -198,8 +199,8 @@ void IRC_Serveur::run()
                                     send(clients[i].get_fd_client(), "Mot de passe correct, vous pouvez continuer.\n", 45, 0);
                                 } else {
                                     send(clients[i].get_fd_client(), "Mot de passe incorrect, connexion fermee.\n", 42, 0);
-                                    close(clients[i].get_fd_client());
-                                    FD_CLR(clients[i].get_fd_client(), &master_set);
+                                    // close(clients[i].get_fd_client());
+                                    // FD_CLR(clients[i].get_fd_client(), &master_set);  // a remetre mais sa bug
                                 }
                                 break;
                             }
@@ -234,12 +235,12 @@ void IRC_Serveur::run()
                             case CMD_PART:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                part_chanel(clients[i], chanel_tmp, IRC.params[0]);
+                                part_chanel(clients[i], chanel_tmp, IRC.params[0], clients);
                                 break;
                             }
 
                             case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
-                                privmsg(clients, IRC.params, clients[i], chanels);
+                                privmsg(clients, IRC.params, clients[i], chanels, IRC.command);
                                 break;
 
                            case CMD_KICK:
