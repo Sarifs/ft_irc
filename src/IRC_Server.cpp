@@ -218,7 +218,7 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_USER:
-                                change_username(clients[i], IRC.params[0]);
+                                change_username(clients[i], IRC.params[0], clients[i]);
                                 break;
 
                             case CMD_NOUSER:
@@ -227,15 +227,15 @@ void IRC_Serveur::run()
 
                             case CMD_JOIN:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], true, clients[i].get_username());
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], true, clients[i]);
                                 join_chanel(clients[i], chanel_tmp);
                                 break;
                             }
 
                             case CMD_PART:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                part_chanel(clients[i], chanel_tmp, IRC.params[0], clients);
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                part_chanel(clients[i], chanel_tmp, IRC.params[0]);
                                 break;
                             }
 
@@ -245,8 +245,8 @@ void IRC_Serveur::run()
 
                            case CMD_KICK:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (check_modo(chanel_tmp, clients[i].get_username()))
                                 {
                                     chanel_tmp->del_user(IRC.params[1]);
                                     std::cout << "Client a retirer quelqu'un" << std::endl;
@@ -256,10 +256,14 @@ void IRC_Serveur::run()
                                 
                             case CMD_INVITE:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (check_modo(chanel_tmp, clients[i].get_username()))
                                 {
-                                    chanel_tmp->add_user(IRC.params[1]);
+                                    for (size_t i = 0; i < clients.size(); i++)
+                                    {
+                                        if (clients[i].get_username() == IRC.params[1])
+                                            chanel_tmp->add_user(clients[i]);
+                                    }
                                     std::cout << "Client a invité quelqu'un" << std::endl;
                                 }
                                 break;
@@ -267,8 +271,8 @@ void IRC_Serveur::run()
 
                             case CMD_TOPIC:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (check_modo(chanel_tmp, clients[i].get_username()))
                                 {
                                     std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
                                 }
@@ -277,8 +281,8 @@ void IRC_Serveur::run()
 
                             case CMD_MODE:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i].get_username());
-                                if (check_modo(chanel_tmp, IRC.params[0], clients[i].get_username()))
+                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (check_modo(chanel_tmp, clients[i].get_username()))
                                 {
                                    // cmd_mode();
                                     std::cout << "Client a ouvert les parametres" << std::endl;

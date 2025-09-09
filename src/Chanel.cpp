@@ -13,10 +13,10 @@
 #include "../include/Chanel.hpp"
 #include <vector>
 
-Chanel::Chanel(std::string name, std::string user_name) : name(name)
+Chanel::Chanel(std::string name, Client user) : name(name)
 {
-    user.push_back(user_name);
-    modo.push_back(user_name);
+    users.push_back(user);
+    modo.push_back(user.get_nickname());
 }
 
 Chanel::~Chanel()
@@ -30,9 +30,9 @@ std::string Chanel::get_name(void)
     return name;
 }
 
-std::vector<std::string> Chanel::get_user(void)
+std::vector<Client> Chanel::get_user(void)
 {
-    return user;
+    return users;
 }
 
 std::vector<std::string> Chanel::get_conv(void)
@@ -47,9 +47,9 @@ std::vector<std::string> Chanel::get_modo(void)
 
 // add
 
-void Chanel::add_user(std::string name)
+void Chanel::add_user(Client name)
 {
-    user.push_back(name);
+    users.push_back(name);
 }
 
 void Chanel::add_conv(std::string txt)
@@ -74,18 +74,24 @@ void Chanel::del_modo(std::string name)
 
 void Chanel::del_user(std::string name)
 {
-    for (size_t i = 0; i < user.size(); i++) {
-        if(name == user[i])
-            user[i] = "\0";
+    for (std::vector<Client>::iterator i = users.begin(); i != users.end(); )
+    {
+        if (i->get_nickname() == name)
+            i = users.erase(i);
+        else
+            ++i;
     }
-    for (size_t i = 0; i < user.size(); i++) {
-        std::cout << user[i] << std::endl;
-    }
+
+    for (size_t i = 0; i < users.size(); i++)
+        std::cout << users[i].get_nickname() << std::endl;
 }
+
+
+
 
 // utiles
 
-Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, std::string user)
+Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client user)
 {
     for (size_t i = 0; i < chanels.size(); i++)
     {
@@ -97,6 +103,7 @@ Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, 
     if (create)
     {
         std::cout << "nouveau chanel cree" << std::endl;
+        send(user.get_fd_client(), "vous avez cree un nouvaux chanel !\n", 35, 0);
         chanels.push_back(Chanel(name, user));
         return &chanels.back();
     }
