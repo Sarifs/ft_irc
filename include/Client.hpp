@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/09 20:42:26 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/09 21:57:26 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name); //, s
 
 void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels, std::string cmd);
 
-bool check_modo(Chanel *chanel, std::string name);
+bool check_modo(Chanel *chanel, Client client);
 
 void send_msg(Client Client, std::vector<std::string> msg, int fd, std::string cmd);
 

@@ -246,7 +246,7 @@ void IRC_Serveur::run()
                            case CMD_KICK:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
-                                if (check_modo(chanel_tmp, clients[i].get_username()))
+                                if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     chanel_tmp->del_user(IRC.params[1]);
                                     std::cout << "Client a retirer quelqu'un" << std::endl;
@@ -257,7 +257,7 @@ void IRC_Serveur::run()
                             case CMD_INVITE:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
-                                if (check_modo(chanel_tmp, clients[i].get_username()))
+                                if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     for (size_t i = 0; i < clients.size(); i++)
                                     {
@@ -272,7 +272,7 @@ void IRC_Serveur::run()
                             case CMD_TOPIC:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
-                                if (check_modo(chanel_tmp, clients[i].get_username()))
+                                if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
                                 }
@@ -282,7 +282,7 @@ void IRC_Serveur::run()
                             case CMD_MODE:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
-                                if (check_modo(chanel_tmp, clients[i].get_username()))
+                                if (check_modo(chanel_tmp, clients[i]))
                                 {
                                    // cmd_mode();
                                     std::cout << "Client a ouvert les parametres" << std::endl;

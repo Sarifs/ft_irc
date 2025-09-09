@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/09 20:45:18 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/09 21:57:01 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,14 +153,13 @@ void change_nickname(std::vector<Client>& clients, std::string nick, int i)
 }
 
 
-void change_username(Client &clients, std::string user, Client &client) // a refaire
+void change_username(Client &clients, std::string user, Client &client) // ajouter le -> <hostname> <servername> :<realname>
 {
-    // std::string user(user);
     user.erase(user.find_last_not_of(" \r\n") + 1);
     
     if (user.empty())
         send(clients.get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
-    else // :Welcome to the IRC server <nick>!<user>@<host>
+    else
     {
         clients.set_username(user);
         send(clients.get_fd_client(), ":server 001 ", 12, 0);
@@ -172,7 +171,7 @@ void change_username(Client &clients, std::string user, Client &client) // a ref
     }
 }
 
-void join_chanel(Client &client, Chanel *chanel)
+void join_chanel(Client &client, Chanel *chanel) // ajoute les bool et le MDP
 {
     std::vector<Client> users = chanel->get_user();
 
@@ -196,7 +195,7 @@ void join_chanel(Client &client, Chanel *chanel)
     send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
 }
 
-void part_chanel(Client &client, Chanel *chanel, const std::string &name) //, std::vector<Client>& clients)
+void part_chanel(Client &client, Chanel *chanel, const std::string &name)
 {
     if (!chanel)
     {
@@ -248,7 +247,7 @@ void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client c
         if (clients[i].get_nickname() == msg[0])
         {
             send_msg(client, msg, clients[i].get_fd_client(), cmd);
-            break;
+            return;
         }
     }
     send(client.get_fd_client(), ":server 401 ", 12, 0);
@@ -258,15 +257,19 @@ void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client c
     send(client.get_fd_client(), " :No such nick/channel\n", 23, 0);
 }
 
-bool check_modo(Chanel *chanel, std::string name)
+bool check_modo(Chanel *chanel, Client client)
 {
     std::vector<std::string> modo = chanel->get_modo();
     for (size_t j = 0; j < modo.size(); j++)
     {
-        if (name == modo[j])
+        if (client.get_nickname() == modo[j])
             return true;
     }
-    // send ":server 482 <nick> #channel :You're not channel operator"
+    send(client.get_fd_client(), ":server 482 ", 12, 0);
+    send(client.get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
+    send(client.get_fd_client(), " #", 2, 0);
+    send(client.get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
+    send(client.get_fd_client(), " :You're not channel operator\n", 30, 0);
     return false;
 }
 
