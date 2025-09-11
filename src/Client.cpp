@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/09 21:57:01 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/11 17:38:21 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,7 +171,7 @@ void change_username(Client &clients, std::string user, Client &client) // ajout
     }
 }
 
-void join_chanel(Client &client, Chanel *chanel) // ajoute les bool et le MDP
+void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les bool et le MDP
 {
     std::vector<Client> users = chanel->get_user();
 
@@ -183,16 +183,24 @@ void join_chanel(Client &client, Chanel *chanel) // ajoute les bool et le MDP
             return;
         }
     }
-
-    for (size_t i = 0; i < users.size(); i++)
+    if (chanel->get_invite() == true)
+        send(client.get_fd_client(), "chanel sur invitation uniqument !\n", 34, 0);
+    else if (chanel->get_size() > 0 && chanel->get_user().size() >= chanel->get_size())
+        send(client.get_fd_client(), "le chanel est plein !\n", 22, 0);
+    else if (chanel->get_mdp() != "" && chanel->get_mdp() != mdp)
+        send(client.get_fd_client(), "le mot de pass est incorect !\n", 30, 0);
+    else
     {
-        send(users[i].get_fd_client(), ":", 1, 0);
-        send(users[i].get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
-        send(users[i].get_fd_client(), " JOIN :#", 8, 0);
-        send(users[i].get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
+        for (size_t i = 0; i < users.size(); i++)
+        {
+            send(users[i].get_fd_client(), ":", 1, 0);
+            send(users[i].get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
+            send(users[i].get_fd_client(), " JOIN :#", 8, 0);
+            send(users[i].get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
+        }
+        chanel->add_user(client);
+        send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
     }
-    chanel->add_user(client);
-    send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
 }
 
 void part_chanel(Client &client, Chanel *chanel, const std::string &name)
@@ -265,13 +273,14 @@ bool check_modo(Chanel *chanel, Client client)
         if (client.get_nickname() == modo[j])
             return true;
     }
-    send(client.get_fd_client(), ":server 482 ", 12, 0);
-    send(client.get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
-    send(client.get_fd_client(), " #", 2, 0);
-    send(client.get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
-    send(client.get_fd_client(), " :You're not channel operator\n", 30, 0);
+
+    // Construire le message IRC 482 complet
+    std::string reply = ":server 482 " + client.get_nickname() + " #" + chanel->get_name() + " :You're not channel operator\r\n";
+    send(client.get_fd_client(), reply.c_str(), reply.size(), 0);
+
     return false;
 }
+
 
 void send_in_chanel(std::vector<std::string> msg, Client client, Chanel chanel)
 {
@@ -305,4 +314,48 @@ void send_action(Client client, int fd, std::string cmd, std::string dest, std::
     }
 
     send(fd, "\r\n", 2, 0);
+}
+
+void mode_cmd(std::vector<std::string> cdm, Chanel *chanel)
+{
+    if (cdm[1][1] == 'i' && cdm[1][2] == '\0')
+    {
+        std::cout << "mode i" << std::endl;
+        if (cdm[1][0] == '+')
+            chanel->chanel_only_invite(true);
+        if (cdm[1][0] == '-')
+            chanel->chanel_only_invite(false);
+    }
+    if (cdm[1][1] == 't' && cdm[1][2] == '\0')
+    {
+        std::cout << "mode t" << std::endl;
+        if (cdm[1][0] == '+')
+            chanel->set_topic(true);
+        if (cdm[1][0] == '-')
+            chanel->set_topic(false);
+    }
+    if (cdm[1][1] == 'k' && cdm[1][2] == '\0')
+    {
+        std::cout << "mode k" << std::endl;
+        if (cdm[1][0] == '+')
+            chanel->set_mdp(cdm[2]);
+        if (cdm[1][0] == '-')
+            chanel->set_mdp("");
+    }
+    if (cdm[1][1] == 'o' && cdm[1][2] == '\0')
+    {
+        std::cout << "mode o" << std::endl;
+        if (cdm[1][0] == '+')
+            chanel->add_modo(cdm[2]);
+        if (cdm[1][0] == '-')
+            chanel->del_modo(cdm[2]);
+    }
+    if (cdm[1][1] == 'l' && cdm[1][2] == '\0')
+    {
+        std::cout << "mode l" << std::endl;
+        if (cdm[1][0] == '+')
+            chanel->set_size(cdm[2]);
+        if (cdm[1][0] == '-')
+            chanel->set_size("-1");
+    }
 }

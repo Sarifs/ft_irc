@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/09 21:57:26 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/09/11 17:38:48 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,7 @@ void change_nickname(std::vector<Client>& clients, std::string user, int i);
 
 void change_username(Client &clients, std::string user, Client &client);
 
-void join_chanel(Client &client, Chanel *chanel);
+void join_chanel(Client &client, Chanel *chanel, std::string mdp);
 
 void part_chanel(Client &client, Chanel *chanel, const std::string &name); //, std::vector<Client>& clients);
 
@@ -71,3 +71,5 @@ void cmd_mode(std::string param, Chanel chanel, std::vector<std::string> plus);
 void send_in_chanel(std::vector<std::string> msg, Client client, Chanel chanel);
 
 void send_action(Client client, int fd, std::string cmd, std::string dest, std::string msg);
+
+void mode_cmd(std::vector<std::string> cdm, Chanel *chanel);

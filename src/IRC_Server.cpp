@@ -228,13 +228,20 @@ void IRC_Serveur::run()
                             case CMD_JOIN:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], true, clients[i]);
-                                join_chanel(clients[i], chanel_tmp);
+                                join_chanel(clients[i], chanel_tmp, IRC.params[1]);
                                 break;
                             }
 
                             case CMD_PART:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (!chanel_tmp)
+                                {
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                    break;
+                                }
                                 part_chanel(clients[i], chanel_tmp, IRC.params[0]);
                                 break;
                             }
@@ -246,6 +253,13 @@ void IRC_Serveur::run()
                            case CMD_KICK:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (!chanel_tmp)
+                                {
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                    break;
+                                }
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     chanel_tmp->del_user(IRC.params[1]);
@@ -257,6 +271,13 @@ void IRC_Serveur::run()
                             case CMD_INVITE:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (!chanel_tmp)
+                                {
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                    break;
+                                }
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     for (size_t i = 0; i < clients.size(); i++)
@@ -272,6 +293,13 @@ void IRC_Serveur::run()
                             case CMD_TOPIC:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (!chanel_tmp)
+                                {
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                    break;
+                                }
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
@@ -282,9 +310,16 @@ void IRC_Serveur::run()
                             case CMD_MODE:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
+                                if (!chanel_tmp)
+                                {
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                    break;
+                                }
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
-                                   // cmd_mode();
+                                    mode_cmd(IRC.params, chanel_tmp);
                                     std::cout << "Client a ouvert les parametres" << std::endl;
                                 }
                                 break;

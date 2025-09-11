@@ -14,6 +14,8 @@
 
 #include "Client.hpp"
 #include <iostream>
+#include <string>
+#include <cstdlib>
 #include <vector>
 
 class Chanel
@@ -23,6 +25,10 @@ private:
     std::vector<Client> users;
     std::vector<std::string> conv;
     std::vector<std::string> modo;
+    std::string mdp;
+    bool only_invite;
+    bool topic;
+    int size;
 
 public:
     Chanel(std::string name, Client user);
@@ -34,6 +40,9 @@ public:
     std::vector<Client> get_user();
     std::vector<std::string> get_conv();
     std::vector<std::string> get_modo();
+    std::string get_mdp();
+    size_t get_size();
+    bool get_invite();
 
     //add
 
@@ -45,6 +54,13 @@ public:
 
     void del_user(std::string name);
     void del_modo(std::string name);
+
+    // setter
+    void chanel_only_invite(bool i);
+    void set_topic(bool i);
+    void set_size(std::string c);
+    void set_mdp(std::string pass);
+
 };
 
 Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client user);

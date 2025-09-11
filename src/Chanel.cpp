@@ -13,7 +13,7 @@
 #include "../include/Chanel.hpp"
 #include <vector>
 
-Chanel::Chanel(std::string name, Client user) : name(name)
+Chanel::Chanel(std::string name, Client user) : name(name), only_invite(false), topic(true), size(-1)
 {
     users.push_back(user);
     modo.push_back(user.get_nickname());
@@ -43,6 +43,21 @@ std::vector<std::string> Chanel::get_conv(void)
 std::vector<std::string> Chanel::get_modo(void)
 {
     return modo;
+}
+
+size_t Chanel::get_size(void)
+{
+    return size;
+}
+
+bool Chanel::get_invite(void)
+{
+    return only_invite;
+}
+
+std::string Chanel::get_mdp(void)
+{
+    return mdp;
 }
 
 // add
@@ -109,4 +124,31 @@ Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, 
     }
 
     return NULL;
+}
+
+void Chanel::chanel_only_invite(bool i)
+{
+    only_invite = i;
+}
+
+void Chanel::set_topic(bool i)
+{
+    topic = i;
+}
+
+void Chanel::set_size(std::string c)
+{
+    size_t i = static_cast<size_t>(atoi(c.c_str()));
+
+    if (i > 0) {
+        size = i;
+        std::cout << "Limite du channel définie à " << size << " utilisateurs." << std::endl;
+    } else {
+        std::cout << "Taille invalide: " << c << std::endl;
+    }
+}
+
+void Chanel::set_mdp(std::string pass)
+{
+    mdp = pass;
 }
