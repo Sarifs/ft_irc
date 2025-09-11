@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/11 17:38:48 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/11 21:43:50 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,7 +64,7 @@ bool check_modo(Chanel *chanel, Client client);
 
 void send_msg(Client Client, std::vector<std::string> msg, int fd, std::string cmd);
 
-void send_prefix(Client Client, int fd);
+std::string send_prefix(Client Client);
 
 void cmd_mode(std::string param, Chanel chanel, std::vector<std::string> plus);
 

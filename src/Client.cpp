@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/11 17:38:21 by marvin           ###   ########.fr       */
+/*   Updated: 2025/09/11 22:09:38 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,34 +81,16 @@ void Client::set_authenticated(bool value)
 
 // ft utile
 
-void send_prefix(Client client, int fd)
+std::string send_prefix(Client client)
 {
-    send(fd, ":", 1, 0);
-        
-    send(fd, client.get_nickname().c_str(), client.get_nickname().size(), 0);
-    
-    send(fd, "!", 1, 0);
-    
-    send(fd, client.get_username().c_str(), client.get_username().size(), 0);
-    
-    send(fd, "@", 1, 0);
-
-    send(fd, client.get_ip().c_str(), client.get_ip().size() , 0);
-
-    send(fd, " ", 1, 0);
+    std::string prefix = ":" + client.get_nickname() + "!" + client.get_username() + "@" + client.get_ip() + " ";
+    return prefix;
 }
 
 void send_msg(Client client, std::vector<std::string> msg, int fd, std::string cmd)
 {
-    send_prefix(client, fd);
-
-    send(fd, cmd.c_str(), cmd.size(), 0);
-
-    send(fd, " ", 1, 0);
-
-    send(fd, msg[0].c_str(), msg[0].size(), 0);
-
-    send(fd, " : ", 3, 0);
+    std::string txt = send_prefix(client) + cmd + " " + msg[0] + " : ";
+    send(fd, txt.c_str(), txt.size(), 0);
 
     for (size_t i = 1; i < msg.size(); i++)
     {
@@ -121,11 +103,9 @@ void send_msg(Client client, std::vector<std::string> msg, int fd, std::string c
 
 void change_nickname(std::vector<Client>& clients, std::string nick, int i)
 {
-    nick.erase(nick.find_last_not_of(" \r\n") + 1);
-
-    if (nick.empty())
+    if (nick == "")
     {
-        send(clients[i].get_fd_client(), "Erreur: pseudo invalide (vide)\n", 25, 0);
+        send(clients[i].get_fd_client(), "Erreur: pseudo invalide (vide)\n", 31, 0);
         return;
     }
 
@@ -139,9 +119,8 @@ void change_nickname(std::vector<Client>& clients, std::string nick, int i)
     {
         if (j != (size_t)i && clients[j].get_nickname() == nick)
         {
-            send(clients[i].get_fd_client(), ":server 433 * ", 14, 0);
-            send(clients[i].get_fd_client(), nick.c_str(), nick.size(), 0);
-            send(clients[i].get_fd_client(), " :Nickname is already in use\n", 29, 0);
+            std::string txt = ":server 433 * " + nick + " :Nickname is already in use\n";
+            send(clients[i].get_fd_client(), txt.c_str(), txt.size(), 0);
             return;
         }
     }
@@ -162,11 +141,8 @@ void change_username(Client &clients, std::string user, Client &client) // ajout
     else
     {
         clients.set_username(user);
-        send(clients.get_fd_client(), ":server 001 ", 12, 0);
-        send(clients.get_fd_client(), user.c_str(), user.size(), 0);
-        send(clients.get_fd_client(), " :Welcome to the IRC server ", 28, 0);
-        send_prefix(client, clients.get_fd_client());
-        send(clients.get_fd_client(), "\n", 1, 0);
+        std::string txt = ":server 001 " + user + " :Welcome to the IRC server " + send_prefix(client) + "\n";
+        send(clients.get_fd_client(), txt.c_str(), txt.size(), 0);
         std::cout << "Client " << clients.get_fd_client() << " a changé son pseudo en: " << user << std::endl;
     }
 }
@@ -179,7 +155,8 @@ void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les 
     {
         if (users[i].get_nickname() == client.get_username())
         {
-            send(client.get_fd_client(), "Vous êtes déjà dans ce channel !\n", 35, 0);
+            std::string txt = "Vous êtes déjà dans ce channel !\n";
+            send(client.get_fd_client(), txt.c_str(), txt.size(), 0);
             return;
         }
     }
@@ -191,13 +168,9 @@ void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les 
         send(client.get_fd_client(), "le mot de pass est incorect !\n", 30, 0);
     else
     {
+        std::string txt = ":" + client.get_nickname() + " JOIN :#" + chanel->get_name() + "\n";
         for (size_t i = 0; i < users.size(); i++)
-        {
-            send(users[i].get_fd_client(), ":", 1, 0);
-            send(users[i].get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
-            send(users[i].get_fd_client(), " JOIN :#", 8, 0);
-            send(users[i].get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
-        }
+            send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
         chanel->add_user(client);
         send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
     }
@@ -218,13 +191,9 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
         if (client.get_username() == users[i].get_username())
         {
             chanel->del_user(client.get_username());
-                for (size_t i = 0; i < users.size(); i++)
-                {
-                    send(users[i].get_fd_client(), ":", 1, 0);
-                    send(users[i].get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
-                    send(users[i].get_fd_client(), " PART #", 7, 0);
-                    send(users[i].get_fd_client(), chanel->get_name().c_str(), chanel->get_name().size(), 0);
-                }
+            std::string txt = ":" + client.get_nickname() + " PART #" + chanel->get_name() + "\n";
+            for (size_t i = 0; i < users.size(); i++)
+                send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
             send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
             std::cout << "Client " << client.get_username() << " a quitté le channel " << name << std::endl;
             return;
@@ -258,11 +227,8 @@ void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client c
             return;
         }
     }
-    send(client.get_fd_client(), ":server 401 ", 12, 0);
-    send(client.get_fd_client(), client.get_nickname().c_str(), client.get_nickname().size(), 0);
-    send(client.get_fd_client(), " ", 1, 0);
-    send(client.get_fd_client(), msg[0].c_str(), msg[0].size(), 0);
-    send(client.get_fd_client(), " :No such nick/channel\n", 23, 0);
+    std::string txt = ":server 401 " + client.get_nickname() + " " + msg[0] + " :No such nick/channel\n";
+    send(client.get_fd_client(), txt.c_str(), txt.size(), 0);
 }
 
 bool check_modo(Chanel *chanel, Client client)
@@ -274,10 +240,8 @@ bool check_modo(Chanel *chanel, Client client)
             return true;
     }
 
-    // Construire le message IRC 482 complet
     std::string reply = ":server 482 " + client.get_nickname() + " #" + chanel->get_name() + " :You're not channel operator\r\n";
     send(client.get_fd_client(), reply.c_str(), reply.size(), 0);
-
     return false;
 }
 
@@ -299,13 +263,8 @@ void send_in_chanel(std::vector<std::string> msg, Client client, Chanel chanel)
 
 void send_action(Client client, int fd, std::string cmd, std::string dest, std::string msg)
 {
-    send_prefix(client, fd);
-
-    send(fd, cmd.c_str(), cmd.size(), 0);
-
-    send(fd, " ", 1, 0);
-
-    send(fd, dest.c_str(), dest.size(), 0);
+    std::string txt = send_prefix(client) + cmd + " " + dest;
+    send(fd, txt.c_str(), txt.size(), 0);
 
     if (msg != "NULL")
     {

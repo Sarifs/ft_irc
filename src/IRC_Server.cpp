@@ -135,8 +135,6 @@ void IRC_Serveur::run()
                         inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
  
                         Client new_client(client_fd, ip);
-                        std::cout << new_client.get_ip() << " <--get this ip" << std::endl;
-
                         clients.push_back(new_client);
                     }
                     else if (client_fd < 0) 
@@ -161,23 +159,14 @@ void IRC_Serveur::run()
                     else
                     {
                         buffer[bytes - 1] = '\0';
-                        std::cout << "Debut du parsing" << std::endl;
                         std::string ircmsg = buffer;
+                        IRC.params[0] = "";
                         IRC = parseIRCMessage(ircmsg);
-                        std::cout << "\n" << std::endl;
-                        std::cout << IRC.command << " <--CMD" << std::endl;
-                        for (size_t i = 0; i < IRC.params.size(); i++)
-                            std::cout << IRC.params[i] << " <--param" << std::endl;
-                        std::cout << IRC.prefix << " <--prefix" << std::endl;
-                        std::cout << "\n" << std::endl;
-
-                        std::cout << "Fin du parsing" << std::endl;
-                        std::cout << clients[i].get_ip() << " <--get this ip" << std::endl;
                         std::cout << "commande du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
-
                         Command cmd = parse_command(IRC.command.c_str(), clients[i]);
 
-                        switch (cmd) {
+                        switch (cmd)
+                        {
                             case CMD_EXIT:
                                 send(clients[i].get_fd_client(), "vous vous etes deconecter !\n", 28, 0);
                                 std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
@@ -192,16 +181,13 @@ void IRC_Serveur::run()
 
                             case CMD_PASS:
                             {
-                                std::string pass = IRC.params[0];
-                                
-                                if (pass == this->get_password()) {
+                                if (IRC.params[0] == this->get_password())
+                                {
                                     clients[i].set_authenticated(true);
                                     send(clients[i].get_fd_client(), "Mot de passe correct, vous pouvez continuer.\n", 45, 0);
-                                } else {
-                                    send(clients[i].get_fd_client(), "Mot de passe incorrect, connexion fermee.\n", 42, 0);
-                                    // close(clients[i].get_fd_client());
-                                    // FD_CLR(clients[i].get_fd_client(), &master_set);  // a remetre mais sa bug
                                 }
+                                else
+                                    send(clients[i].get_fd_client(), "Mot de passe incorrect, veillez reessayer.\n", 43, 0); // devrais quitter et fermer la co
                                 break;
                             }
 
