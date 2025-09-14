@@ -13,6 +13,7 @@
 #include "../include/IRC_Serveur.hpp"
 #include "../include/Chanel.hpp"
 #include "../include/Parsing.hpp"
+#include <csignal>
 
 enum Command {
     CMD_EXIT,
@@ -93,6 +94,11 @@ std::string IRC_Serveur::get_password()
     return passwold;
 }
 
+void leave_irc(int sig)
+{
+    (void)sig;
+    std::cout << "Leave irccccccccccccccccc" << std::endl;
+}
 
 void IRC_Serveur::run()
 {
@@ -102,7 +108,7 @@ void IRC_Serveur::run()
     std::vector<Chanel> chanels;
 
     fd_set master_set, read_set;
-
+    signal(SIGINT,leave_irc);
     struct sockaddr_in address;
     socklen_t addrlen = sizeof(address);
     int max_fd = this->fd_server;
