@@ -219,22 +219,30 @@ void IRC_Serveur::run()
 
                             case CMD_JOIN:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], true, clients[i]);
-                                join_chanel(clients[i], chanel_tmp, IRC.params[1]);
+                                for (size_t p = 0; p < IRC.params.size(); p++)
+                                {
+                                    Chanel *chanel_tmp = set_chanel(chanels, IRC.params[p], true, clients[i]);
+                                    if (!chanel_tmp)
+                                        continue;
+                                    join_chanel(clients[i], chanel_tmp, IRC.params[1]);
+                                }
                                 break;
                             }
 
                             case CMD_PART:
                             {
-                                Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
-                                if (!chanel_tmp)
+                                for (size_t p = 0; p < IRC.params.size(); p++)
                                 {
-                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
-                                                    + IRC.params[0] + " :No such channel\r\n";
-                                    send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
-                                    break;
+                                    Chanel *chanel_tmp = set_chanel(chanels, IRC.params[p], false, clients[i]);
+                                    if (!chanel_tmp)
+                                    {
+                                        std::string reply = ":server 403 " + clients[i].get_nickname() + " "
+                                                        + IRC.params[p] + " :No such channel\r\n";
+                                        send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                        break;
+                                    }
+                                    part_chanel(clients[i], chanel_tmp, IRC.params[p]);
                                 }
-                                part_chanel(clients[i], chanel_tmp, IRC.params[0]);
                                 break;
                             }
 
@@ -254,7 +262,8 @@ void IRC_Serveur::run()
                                 }
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
-                                    chanel_tmp->del_user(IRC.params[1]);
+                                    for (size_t p = 1; p < IRC.params.size(); p++)
+                                        chanel_tmp->del_user(IRC.params[p]);
                                     std::cout << "Client a retirer quelqu'un" << std::endl;
                                 }
                                 break;
@@ -274,8 +283,9 @@ void IRC_Serveur::run()
                                 {
                                     for (size_t i = 0; i < clients.size(); i++)
                                     {
-                                        if (clients[i].get_username() == IRC.params[1])
-                                            chanel_tmp->add_user(clients[i]);
+                                        for (size_t p = 1; p < IRC.params.size(); p++)
+                                            if (clients[i].get_username() == IRC.params[p])
+                                                chanel_tmp->add_user(clients[i]);
                                     }
                                     std::cout << "Client a invité quelqu'un" << std::endl;
                                 }
@@ -317,15 +327,8 @@ void IRC_Serveur::run()
                                 break;
                             }
 
-                            case CMD_UNKNOWN: // a supp mais reste present pour les test d'envoie de message
+                            case CMD_UNKNOWN:
                                 std::cout << "Unknown commande"<<std::endl;
-                                // for (int other_fd = 0; other_fd <= max_fd; other_fd++) {
-                                //     if (FD_ISSET(other_fd, &master_set) &&
-                                //         other_fd != this->fd_server && other_fd != clients[i].get_fd_client())
-                                //     {
-                                //         send_msg(clients[i].get_nickname(), buffer, other_fd);
-                                //     }
-                                // }
                                 break;
                         }
                     }

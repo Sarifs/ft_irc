@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/11 22:09:38 by marvin           ###   ########.fr       */
+/*   Updated: 2025/10/03 19:35:06 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les 
 
     for (size_t i = 0; i < users.size(); i++)
     {
-        if (users[i].get_nickname() == client.get_username())
+        if (users[i].get_nickname() == client.get_nickname())
         {
             std::string txt = "Vous êtes déjà dans ce channel !\n";
             send(client.get_fd_client(), txt.c_str(), txt.size(), 0);
@@ -188,20 +188,20 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
 
     for (size_t i = 0; i < users.size(); i++)
     {
-        if (client.get_username() == users[i].get_username())
+        if (client.get_nickname() == users[i].get_nickname())
         {
-            chanel->del_user(client.get_username());
+            chanel->del_user(client.get_nickname());
             std::string txt = ":" + client.get_nickname() + " PART #" + chanel->get_name() + "\n";
             for (size_t i = 0; i < users.size(); i++)
                 send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
             send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
-            std::cout << "Client " << client.get_username() << " a quitté le channel " << name << std::endl;
+            std::cout << "Client " << client.get_nickname() << " a quitté le channel " << name << std::endl;
             return;
         }
     }
 
     send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
-    std::cout << "Client " << client.get_username() << " a essayé de quitter " << name << " sans y être.\n";
+    std::cout << "Client " << client.get_nickname() << " a essayé de quitter " << name << " sans y être.\n";
 }
 
 void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels, std::string cmd)
