@@ -1,14 +1,30 @@
 #pragma once
-#include <sys/types.h>
+#include <csignal>
+#include <sys/signalfd.h>
+#include <unistd.h>
+#include <cerrno>
+#include <cstdint>
+#include <iostream>
 
-typedef enum {
-    CTRL_C_NONE = 0,        
-    CTRL_C_SERVER_TTY,      
-    CTRL_C_FROM_CLIENT      
-} ctrlc_origin_t;
+enum class CtrlCOrigin {
+    None = 0,
+    ServerTTY,    
+    FromClient 
+};
 
-int ctrlc_init_signalfd(void);
+class SignalCtrlC {
+public:
+    SignalCtrlC();
+    ~SignalCtrlC();
 
-ctrlc_origin_t ctrlc_poll(int sfd, pid_t *out_sender_pid);
+    SignalCtrlC(const SignalCtrlC&) = delete;
+    SignalCtrlC& operator=(const SignalCtrlC&) = delete;
 
-void ctrlc_close(int sfd);
+    CtrlCOrigin pollOnce(pid_t &senderPid);
+
+    inline int fd() const { return signalfd_; }
+    inline bool isValid() const { return signalfd_ >= 0; }
+
+private:
+    int signalfd_;
+};
