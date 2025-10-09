@@ -158,9 +158,11 @@ void IRC_Serveur::run()
                     int bytes = recv(clients[i].get_fd_client(), buffer, sizeof(buffer) - 1, 0);
                     if (bytes <= 0)
                     {
-                        std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
+                        std::cout << "Client déconnecté brutalement : " << clients[i].get_nickname() << std::endl;
                         close(clients[i].get_fd_client());
                         FD_CLR(clients[i].get_fd_client(), &master_set);
+                        clients.erase(clients.begin() + i);
+                        continue;
                     }
                     else
                     {
@@ -178,7 +180,7 @@ void IRC_Serveur::run()
                                 std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
                                 close(clients[i].get_fd_client());
                                 FD_CLR(clients[i].get_fd_client(), &master_set);
-                                // supp le client du vector
+                                clients.erase(clients.begin() + i);
                                 break;
 
                             case CMD_PING:
@@ -302,9 +304,13 @@ void IRC_Serveur::run()
                                     send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                     break;
                                 }
+                                std::vector<Client> users = chanel_tmp->get_user();
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
+                                    std::string txt = ":" + clients[i].get_nickname() + " TOPIC #" + chanel_tmp->get_name() + " : " + IRC.params[1] + "\n";
+                                    for (size_t i = 0; i < users.size(); i++)
+                                        send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
                                 }
                                 break;
                             }
