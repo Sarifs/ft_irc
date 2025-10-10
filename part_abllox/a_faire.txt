@@ -1,2 +1,0 @@
-PRIVMSG #chan :msg	        Envoie un message dans un salon. Relayé à tous les membres.
-PRIVMSG pseudo :msg	        Message privé direct à un utilisateur.
