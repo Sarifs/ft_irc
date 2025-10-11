@@ -6,15 +6,13 @@
 #include <sstream>
 #include <iostream>
 
-struct  IRCMessage{
-    std::string     prefix;
-    std::string     command;
-    std::vector<std::string>    params;
+struct IRCMessage {
+    std::string              prefix;
+    std::string              command;
+    std::vector<std::string> params;
 };
 
-
-IRCMessage  parseIRCMessage(const std::string& rawInput);
-void    handleIRCMessage(const IRCMessage& msg);
-
+IRCMessage parseIRCMessage(const std::string& rawInput);
+void       handleIRCMessage(const IRCMessage& msg);
 
 #endif

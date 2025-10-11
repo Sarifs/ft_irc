@@ -3,41 +3,48 @@
 /*                                                        :::      ::::::::   */
 /*   IRC_Serveur.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: mdiomand <mdiomand@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/27 13:24:03 by idioumas          #+#    #+#             */
-/*   Updated: 2025/09/07 15:25:49 by marvin           ###   ########.fr       */
+/*   Updated: 2025/10/11 15:19:32 by mdiomand         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 
-#pragma once
-#include <iostream>
-#include <vector>
+#ifndef IRC_SERVEUR_HPP
+#define IRC_SERVEUR_HPP
+
 #include <string>
-#include <cstring>
-#include <cstdlib>
-#include <unistd.h>
+#include <vector>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
-#include <arpa/inet.h>
-/*utils*/
+#include <csignal>
+#include <iostream>
 
 #include "Client.hpp"
+#include "Chanel.hpp"
+#include "Parsing.hpp"
 
-class IRC_Serveur
-{
-private:
-    IRC_Serveur();
-    int fd_server;
-    std::vector<int> fds_client;
-    std::string passwold;
-    
+class IRC_Serveur {
 public:
-    IRC_Serveur(int port, std::string passwold);
-    std::string get_password();
-    void run();
+    IRC_Serveur(int port, const std::string &pass);
     ~IRC_Serveur();
+
+    void run();
+    void stop();
+    std::string get_password() const;
+
+private:
+    int                      fd_server;
+    std::string              passwold;
+
+    std::vector<Client>      clients;   // propriétaire des clients
+    std::vector<Chanel>      chanels;   // propriétaire des channels
+
+    bool                     running;   // C++98 (pas d'atomic)
 };
 
+#endif

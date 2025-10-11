@@ -138,5 +138,3 @@ void    handleIRCMessage(const IRCMessage& msg){
         std::cout << "\n";
     }
 }
-
-

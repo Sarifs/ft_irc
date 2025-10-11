@@ -10,57 +10,57 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once 
+#ifndef CHANEL_HPP
+#define CHANEL_HPP
 
-#include "Client.hpp"
-#include <iostream>
 #include <string>
-#include <cstdlib>
 #include <vector>
+#include <iostream>
+#include <sys/socket.h>
 
-class Chanel
-{
-private:
-    std::string name;
-    std::vector<Client> users;
-    std::vector<std::string> conv;
-    std::vector<std::string> modo;
-    std::string mdp;
-    bool only_invite;
-    bool topic;
-    int size;
+class Client;
 
+class Chanel {
 public:
-    Chanel(std::string name, Client user);
+    Chanel(std::string name, Client &creator);
     ~Chanel();
 
-    //getter
+    // getters
+    const std::string&              get_name() const;
+    const std::vector<Client*>&     get_user() const;
+    const std::vector<std::string>& get_conv() const;
+    const std::vector<std::string>& get_modo() const;
+    size_t                          get_size() const;
+    bool                            get_invite() const;
+    const std::string&              get_mdp() const;
 
-    std::string get_name(void);
-    std::vector<Client> get_user();
-    std::vector<std::string> get_conv();
-    std::vector<std::string> get_modo();
-    std::string get_mdp();
-    size_t get_size();
-    bool get_invite();
+    // add
+    void add_user(Client &user);
+    void add_conv(const std::string &txt);
+    void add_modo(const std::string &name);
 
-    //add
+    // del
+    void del_modo(const std::string &name);
+    void del_user(const std::string &nickname);
 
-    void add_user(Client client);
-    void add_modo(std::string name);
-    void add_conv(std::string txt);
-
-    //del
-
-    void del_user(std::string name);
-    void del_modo(std::string name);
-
-    // setter
+    // modes
     void chanel_only_invite(bool i);
     void set_topic(bool i);
-    void set_size(std::string c);
-    void set_mdp(std::string pass);
+    void set_size(const std::string &c);
+    void set_mdp(const std::string &pass);
 
+private:
+    std::string              name;
+    std::vector<Client*>     users;    // non owning pointers
+    std::vector<std::string> conv;
+    std::vector<std::string> modo;     // nicknames
+    bool                     only_invite;
+    bool                     topic;
+    size_t                   size;     // -1 = illimité
+    std::string              mdp;
 };
 
-Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client user);
+// util hors classe
+Chanel* set_chanel(std::vector<Chanel>& chanels, const std::string &name, bool create, Client &user);
+
+#endif

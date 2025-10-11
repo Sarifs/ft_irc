@@ -3,318 +3,35 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
+/*   By: mdiomand <mdiomand@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/10/03 19:35:06 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/10/11 15:19:25 by mdiomand         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../include/Client.hpp"
-#include "../include/Chanel.hpp"
 
+Client::Client(int fd_client, const char *ip_cstr)
+: fd(fd_client), ip(ip_cstr ? ip_cstr : ""), authenticated(false) {}
 
-Client::Client(int fd_client, char *ip): fd(fd_client), authenticated(false) {
-    this->ip = std::string(ip);
-}
-//Client::Client() : id(0), nickname("nickname"), username("username"), chanelname("void") {}
+Client::Client() : fd(-1), authenticated(false) {}
 
-Client::~Client() {}
-
- // getter
-
-std::string Client::get_ip(void)
-{
-    return ip;
+Client::~Client() {
+    // Fermeture centralisée par le serveur -> ne rien fermer ici
 }
 
-std::string Client::get_nickname(void)
-{
-    return nickname;
-}
+int Client::get_fd_client() const { return fd; }
+std::string Client::get_ip() const { return ip; }
+std::string Client::get_nickname() const { return nickname; }
+std::string Client::get_username() const { return username; }
+std::string Client::get_chanelname() const { return chanelname; }
 
-std::string Client::get_username(void)
-{
-    return username;
-}
+void Client::set_nickname(const std::string &v) { nickname = v; }
+void Client::set_username(const std::string &v) { username = v; }
+void Client::set_chanelname(const std::string &v) { chanelname = v; }
 
-std::string Client::get_chanelname(void)
-{
-    return chanelname;
-}
+bool Client::is_authenticated() const { return authenticated; }
+void Client::set_authenticated(bool v) { authenticated = v; }
 
- // setter
-
-void Client::set_nickname(std::string nickname)
-{
-    this->nickname = nickname;
-}
-
-void Client::set_username(std::string username)
-{
-    this->username = username;
-}
-
-void Client::set_chanelname(std::string chanel_name)
-{
-    this->chanelname = chanel_name;
-}
-
-
-int Client::get_fd_client(void)
-{
-    return this->fd;
-}
-
-// authenticated
-
-bool Client::is_authenticated()
-{
-    return authenticated;
-}
-
-void Client::set_authenticated(bool value)
-{
-    authenticated = value;
-}
-
-
-// ft utile
-
-std::string send_prefix(Client client)
-{
-    std::string prefix = ":" + client.get_nickname() + "!" + client.get_username() + "@" + client.get_ip() + " ";
-    return prefix;
-}
-
-void send_msg(Client client, std::vector<std::string> msg, int fd, std::string cmd)
-{
-    std::string txt = send_prefix(client) + cmd + " " + msg[0] + " : ";
-    send(fd, txt.c_str(), txt.size(), 0);
-
-    for (size_t i = 1; i < msg.size(); i++)
-    {
-        send(fd, msg[i].c_str(), strlen(msg[i].c_str()), 0);
-        send(fd, " ", 1, 0);
-    }
-
-    send(fd, "\r\n", 2, 0);
-}
-
-void change_nickname(std::vector<Client>& clients, std::string nick, int i)
-{
-    if (nick == "")
-    {
-        send(clients[i].get_fd_client(), "Erreur: pseudo invalide (vide)\n", 31, 0);
-        return;
-    }
-
-    if (!clients[i].get_nickname().empty())
-    {
-        send(clients[i].get_fd_client(), "vous ne pouvez pas changer de nickname !\n", 41, 0); // pas obliger
-        return;
-    }
-
-    for (size_t j = 0; j < clients.size(); j++)
-    {
-        if (j != (size_t)i && clients[j].get_nickname() == nick)
-        {
-            std::string txt = ":server 433 * " + nick + " :Nickname is already in use\n";
-            send(clients[i].get_fd_client(), txt.c_str(), txt.size(), 0);
-            return;
-        }
-    }
-
-    clients[i].set_nickname(nick);
-    send(clients[i].get_fd_client(), "vous avez changé de pseudo !\n", 30, 0);
-    std::cout << "Client " << clients[i].get_fd_client() 
-              << " a changé son pseudo en: " << nick << std::endl;
-}
-
-
-void change_username(Client &clients, std::string user, Client &client) // ajouter le -> <hostname> <servername> :<realname>
-{
-    user.erase(user.find_last_not_of(" \r\n") + 1);
-    
-    if (user.empty())
-        send(clients.get_fd_client(), "Erreur: pseudo invalide\n", 25, 0);
-    else
-    {
-        clients.set_username(user);
-        std::string txt = ":server 001 " + user + " :Welcome to the IRC server " + send_prefix(client) + "\n";
-        send(clients.get_fd_client(), txt.c_str(), txt.size(), 0);
-        std::cout << "Client " << clients.get_fd_client() << " a changé son pseudo en: " << user << std::endl;
-    }
-}
-
-void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les bool et le MDP
-{
-    std::vector<Client> users = chanel->get_user();
-
-    for (size_t i = 0; i < users.size(); i++)
-    {
-        if (users[i].get_nickname() == client.get_nickname())
-        {
-            std::string txt = "Vous êtes déjà dans ce channel !\n";
-            send(client.get_fd_client(), txt.c_str(), txt.size(), 0);
-            return;
-        }
-    }
-    if (chanel->get_invite() == true)
-        send(client.get_fd_client(), "chanel sur invitation uniqument !\n", 34, 0);
-    else if (chanel->get_size() > 0 && chanel->get_user().size() >= chanel->get_size())
-        send(client.get_fd_client(), "le chanel est plein !\n", 22, 0);
-    else if (chanel->get_mdp() != "" && chanel->get_mdp() != mdp)
-        send(client.get_fd_client(), "le mot de pass est incorect !\n", 30, 0);
-    else
-    {
-        std::string txt = ":" + client.get_nickname() + " JOIN :#" + chanel->get_name() + "\n";
-        for (size_t i = 0; i < users.size(); i++)
-            send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
-        chanel->add_user(client);
-        send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
-    }
-}
-
-void part_chanel(Client &client, Chanel *chanel, const std::string &name)
-{
-    if (!chanel)
-    {
-        send(client.get_fd_client(), "Channel introuvable !\n", 23, 0);
-        std::cout << "Channel introuvable : " << name << std::endl;
-        return ;
-    }
-    std::vector<Client> users = chanel->get_user();
-
-    for (size_t i = 0; i < users.size(); i++)
-    {
-        if (client.get_nickname() == users[i].get_nickname())
-        {
-            chanel->del_user(client.get_nickname());
-            std::string txt = ":" + client.get_nickname() + " PART #" + chanel->get_name() + "\n";
-            for (size_t i = 0; i < users.size(); i++)
-                send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
-            send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
-            std::cout << "Client " << client.get_nickname() << " a quitté le channel " << name << std::endl;
-            return;
-        }
-    }
-
-    send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
-    std::cout << "Client " << client.get_nickname() << " a essayé de quitter " << name << " sans y être.\n";
-}
-
-void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels, std::string cmd)
-{
-    if (msg[0][0] == '#')
-    {
-        const char *name = msg[0].c_str();
-        for (size_t i = 0; i < chanels.size(); i++)
-        {
-            if (!strcmp(&name[1], chanels[i].get_name().c_str()))
-            {
-                send_in_chanel(msg, client, chanels[i]);
-                return;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < clients.size(); i++)
-    {
-        if (clients[i].get_nickname() == msg[0])
-        {
-            send_msg(client, msg, clients[i].get_fd_client(), cmd);
-            return;
-        }
-    }
-    std::string txt = ":server 401 " + client.get_nickname() + " " + msg[0] + " :No such nick/channel\n";
-    send(client.get_fd_client(), txt.c_str(), txt.size(), 0);
-}
-
-bool check_modo(Chanel *chanel, Client client)
-{
-    std::vector<std::string> modo = chanel->get_modo();
-    for (size_t j = 0; j < modo.size(); j++)
-    {
-        if (client.get_nickname() == modo[j])
-            return true;
-    }
-
-    std::string reply = ":server 482 " + client.get_nickname() + " #" + chanel->get_name() + " :You're not channel operator\r\n";
-    send(client.get_fd_client(), reply.c_str(), reply.size(), 0);
-    return false;
-}
-
-
-void send_in_chanel(std::vector<std::string> msg, Client client, Chanel chanel)
-{
-    std::vector<Client> user = chanel.get_user();
-    for (size_t i = 0; i < user.size(); i++)
-    {
-        if (client.get_nickname() == user[i].get_username())
-        {
-            for (size_t i = 0; i < user.size(); i++)
-                send_msg(client, msg, user[i].get_fd_client(), "PRIVMSG");
-            return ;
-        }
-    }
-    send(client.get_fd_client(), "Vous n'êtes pas dans ce channel !\n", 35, 0);
-}
-
-void send_action(Client client, int fd, std::string cmd, std::string dest, std::string msg)
-{
-    std::string txt = send_prefix(client) + cmd + " " + dest;
-    send(fd, txt.c_str(), txt.size(), 0);
-
-    if (msg != "NULL")
-    {
-        send(fd, " : ", 3, 0);
-        send(fd, msg.c_str(), strlen(msg.c_str()), 0);
-    }
-
-    send(fd, "\r\n", 2, 0);
-}
-
-void mode_cmd(std::vector<std::string> cdm, Chanel *chanel)
-{
-    if (cdm[1][1] == 'i' && cdm[1][2] == '\0')
-    {
-        std::cout << "mode i" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->chanel_only_invite(true);
-        if (cdm[1][0] == '-')
-            chanel->chanel_only_invite(false);
-    }
-    if (cdm[1][1] == 't' && cdm[1][2] == '\0')
-    {
-        std::cout << "mode t" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->set_topic(true);
-        if (cdm[1][0] == '-')
-            chanel->set_topic(false);
-    }
-    if (cdm[1][1] == 'k' && cdm[1][2] == '\0')
-    {
-        std::cout << "mode k" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->set_mdp(cdm[2]);
-        if (cdm[1][0] == '-')
-            chanel->set_mdp("");
-    }
-    if (cdm[1][1] == 'o' && cdm[1][2] == '\0')
-    {
-        std::cout << "mode o" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->add_modo(cdm[2]);
-        if (cdm[1][0] == '-')
-            chanel->del_modo(cdm[2]);
-    }
-    if (cdm[1][1] == 'l' && cdm[1][2] == '\0')
-    {
-        std::cout << "mode l" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->set_size(cdm[2]);
-        if (cdm[1][0] == '-')
-            chanel->set_size("-1");
-    }
-}
+void Client::mark_fd_closed() { /* utile si tu veux marquer l'état */ }

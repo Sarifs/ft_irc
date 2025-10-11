@@ -1,63 +1,33 @@
-# ============================
-#   Makefile – Projet IRC
-# ============================
+NAME = irc_server
 
-# Nom de l'exécutable
-NAME        = irc_server
+CXX = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-# Dossiers
-SRCDIR      = src
-INCDIR      = include
-OBJDIR      = obj
+INCLUDES = -Iinclude
 
-# Compilateur & flags
-CXX         = c++
-CXXFLAGS    = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -MMD -MP
-LDFLAGS     =
+SRC = \
+	src/main.cpp \
+	src/IRC_Server.cpp \
+	src/Client.cpp \
+	src/Chanel.cpp \
+	src/Parsing.cpp
 
-# Sources / Objets / Dépendances (auto)
-SRCS        = $(wildcard $(SRCDIR)/*.cpp)
-OBJS        = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
-DEPS        = $(OBJS:.o=.d)
-
-# Couleurs (optionnel)
-GREEN       = \033[1;32m
-RED         = \033[1;31m
-YELLOW      = \033[1;33m
-RESET       = \033[0m
-
-# ============================
-#   Règles
-# ============================
+OBJ = $(SRC:.cpp=.o)
 
 all: $(NAME)
 
-$(NAME): $(OBJS)
-	@echo "$(YELLOW)🔧 Édition des liens...$(RESET)"
-	@$(CXX) $(OBJS) $(LDFLAGS) -o $(NAME)
-	@echo "$(GREEN)✅ Build OK : $(NAME)$(RESET)"
+$(NAME): $(OBJ)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
 
-# Compilation des .cpp -> .o (avec génération des .d)
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
-	@mkdir -p $(OBJDIR)
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
-	@echo "$(GREEN)✔ $<$(RESET)"
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 clean:
-	@echo "$(RED)🧹 Suppression des objets...$(RESET)"
-	@rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJ)
 
 fclean: clean
-	@echo "$(RED)🗑 Suppression de l'exécutable...$(RESET)"
-	@rm -f $(NAME)
+	rm -f $(NAME)
 
 re: fclean all
 
-# Exécuter le binaire (facultatif)
-run: $(NAME)
-	@./$(NAME)
-
-# Inclure les dépendances générées (silencieusement si absentes)
--include $(DEPS)
-
-.PHONY: all clean fclean re run
+.PHONY: all clean fclean re
