@@ -36,7 +36,7 @@ enum Command {
 
 Command parse_command(const char *buffer, Client client)
 {
-    if (!strcmp(buffer, "EXIT")) return CMD_EXIT;
+    if (!strcmp(buffer, "QUIT")) return CMD_EXIT;
     if (!strcmp(buffer, "PING")) return CMD_PING;
     if (!strcmp(buffer, "PASS")) return CMD_PASS;
     if (client.is_authenticated() == false) return CMD_NOPASS;
@@ -224,6 +224,11 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_USER:
+                                if (IRC.params[3] == "")
+                                {
+                                    send(clients[i].get_fd_client(), "USER <username> <hostname> <servername> :<realname>\n", 52, 0);
+                                    break;
+                                }
                                 change_username(clients[i], IRC.params[0], clients[i]);
                                 break;
 

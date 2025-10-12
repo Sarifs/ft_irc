@@ -158,5 +158,5 @@ void Chanel::set_mdp(std::string pass)
 
 void Chanel::set_topic(std::string topic)
 {
-    mdp = topic;
+    topic_msg = topic;
 }
