@@ -94,6 +94,16 @@ std::string IRC_Serveur::get_password()
     return passwold;
 }
 
+void ft_bzero(IRCMessage &irc)
+{
+    irc.command = "";
+    irc.prefix = "";
+    irc.params[0] = "";
+    irc.params[1] = "";
+    irc.params[2] = "";
+    irc.params[3] = "";
+}
+
 void leave_irc(int sig)
 {
     (void)sig;
@@ -113,6 +123,7 @@ void IRC_Serveur::run()
     socklen_t addrlen = sizeof(address);
     int max_fd = this->fd_server;
     char ip[INET_ADDRSTRLEN];
+    memset(&address, 0, sizeof(address));
     inet_ntop(AF_INET, &(address.sin_addr), ip, INET_ADDRSTRLEN);
     Client srvr(this->fd_server, ip);
     clients.push_back(srvr);
@@ -168,8 +179,9 @@ void IRC_Serveur::run()
                     {
                         buffer[bytes - 1] = '\0';
                         std::string ircmsg = buffer;
-                        IRC.params[0] = "";
+                        ft_bzero(IRC);
                         IRC = parseIRCMessage(ircmsg);
+                        if (IRC.prefix != "") continue;
                         std::cout << "commande du client " << clients[i].get_nickname() << " : " << buffer << std::endl;
                         Command cmd = parse_command(IRC.command.c_str(), clients[i]);
 
@@ -307,10 +319,19 @@ void IRC_Serveur::run()
                                 std::vector<Client> users = chanel_tmp->get_user();
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
-                                    std::cout << "Client a changer le theme." << std::endl; // < a placer ":<nick> TOPIC #channel :<new topic>"
-                                    std::string txt = ":" + clients[i].get_nickname() + " TOPIC #" + chanel_tmp->get_name() + " : " + IRC.params[1] + "\n";
-                                    for (size_t i = 0; i < users.size(); i++)
-                                        send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
+                                    if (IRC.params[1] == "")
+                                    {
+                                        std::string txt = "TOPIC : " + chanel_tmp->get_topic() + "\n";
+                                        send(clients[i].get_fd_client(), txt.c_str(), txt.size(), 0);
+                                    }
+                                    else
+                                    {
+                                        std::cout << "Client a changer le theme." << std::endl;
+                                        chanel_tmp->set_topic(IRC.params[1]);
+                                        std::string txt = ":" + clients[i].get_nickname() + " TOPIC #" + chanel_tmp->get_name() + " : " + IRC.params[1] + "\n";
+                                        for (size_t i = 0; i < users.size(); i++)
+                                            send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
+                                    }
                                 }
                                 break;
                             }

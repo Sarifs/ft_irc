@@ -25,6 +25,7 @@ private:
     std::vector<Client> users;
     std::vector<std::string> conv;
     std::vector<std::string> modo;
+    std::string topic_msg;
     std::string mdp;
     bool only_invite;
     bool topic;
@@ -41,6 +42,7 @@ public:
     std::vector<std::string> get_conv();
     std::vector<std::string> get_modo();
     std::string get_mdp();
+    std::string get_topic();
     size_t get_size();
     bool get_invite();
 
@@ -60,6 +62,7 @@ public:
     void set_topic(bool i);
     void set_size(std::string c);
     void set_mdp(std::string pass);
+    void set_topic(std::string topic);
 
 };
 

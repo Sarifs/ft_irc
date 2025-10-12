@@ -17,6 +17,7 @@ Chanel::Chanel(std::string name, Client user) : name(name), only_invite(false), 
 {
     users.push_back(user);
     modo.push_back(user.get_nickname());
+    topic_msg = "no topic is set";
 }
 
 Chanel::~Chanel()
@@ -58,6 +59,11 @@ bool Chanel::get_invite(void)
 std::string Chanel::get_mdp(void)
 {
     return mdp;
+}
+
+std::string Chanel::get_topic(void)
+{
+    return topic_msg;
 }
 
 // add
@@ -148,4 +154,9 @@ void Chanel::set_size(std::string c)
 void Chanel::set_mdp(std::string pass)
 {
     mdp = pass;
+}
+
+void Chanel::set_topic(std::string topic)
+{
+    mdp = topic;
 }
