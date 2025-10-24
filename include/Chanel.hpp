@@ -54,6 +54,7 @@ public:
 
     //del
 
+    void del_chanel(void);
     void del_user(std::string name);
     void del_modo(std::string name);
 

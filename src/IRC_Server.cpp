@@ -333,7 +333,7 @@ void IRC_Serveur::run()
                                     {
                                         std::cout << "Client a changer le theme." << std::endl;
                                         chanel_tmp->set_topic(IRC.params[1]);
-                                        std::string txt = ":" + clients[i].get_nickname() + " TOPIC #" + chanel_tmp->get_name() + " : " + IRC.params[1] + "\n";
+                                        std::string txt = ":" + clients[i].get_nickname() + " TOPIC " + chanel_tmp->get_name() + " : " + IRC.params[1] + "\n";
                                         for (size_t i = 0; i < users.size(); i++)
                                             send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
                                     }

@@ -85,6 +85,12 @@ void Chanel::add_modo(std::string name)
 
 //del
 
+void Chanel::del_chanel(void)
+{
+    name = "";
+}
+
+
 void Chanel::del_modo(std::string name)
 {
     for (size_t i = 0; i < modo.size(); i++) {

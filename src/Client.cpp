@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/10/03 19:35:06 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/10/24 21:52:25 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,7 +168,7 @@ void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les 
         send(client.get_fd_client(), "le mot de pass est incorect !\n", 30, 0);
     else
     {
-        std::string txt = ":" + client.get_nickname() + " JOIN :#" + chanel->get_name() + "\n";
+        std::string txt = ":" + client.get_nickname() + " JOIN :" + chanel->get_name() + "\n";
         for (size_t i = 0; i < users.size(); i++)
             send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
         chanel->add_user(client);
@@ -191,11 +191,14 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
         if (client.get_nickname() == users[i].get_nickname())
         {
             chanel->del_user(client.get_nickname());
-            std::string txt = ":" + client.get_nickname() + " PART #" + chanel->get_name() + "\n";
+            chanel->del_modo(client.get_nickname());
+            std::string txt = ":" + client.get_nickname() + " PART " + chanel->get_name() + "\n";
             for (size_t i = 0; i < users.size(); i++)
                 send(users[i].get_fd_client(), txt.c_str(), txt.size(), 0);
             send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
             std::cout << "Client " << client.get_nickname() << " a quitté le channel " << name << std::endl;
+            if (users.size() == 0)
+                chanel->del_chanel();
             return;
         }
     }
@@ -206,17 +209,20 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
 
 void privmsg(std::vector<Client> clients, std::vector<std::string> msg, Client client, std::vector<Chanel> chanels, std::string cmd)
 {
-    if (msg[0][0] == '#')
+    if (!msg.empty() && !msg[0].empty() && msg[0][0] == '#')
     {
-        const char *name = msg[0].c_str();
-        for (size_t i = 0; i < chanels.size(); i++)
+        std::string name = msg[0];
+        for (size_t i = 0; i < chanels.size(); ++i)
         {
-            if (!strcmp(&name[1], chanels[i].get_name().c_str()))
+            if (chanels[i].get_name() == name)
             {
                 send_in_chanel(msg, client, chanels[i]);
                 return;
             }
         }
+        std::string err = ":server 403 " + client.get_nickname() +
+                        " " + name + " :No such channel\r\n";
+        send(client.get_fd_client(), err.c_str(), err.size(), 0);
     }
 
     for (size_t i = 0; i < clients.size(); i++)
@@ -240,7 +246,7 @@ bool check_modo(Chanel *chanel, Client client)
             return true;
     }
 
-    std::string reply = ":server 482 " + client.get_nickname() + " #" + chanel->get_name() + " :You're not channel operator\r\n";
+    std::string reply = ":server 482 " + client.get_nickname() + " " + chanel->get_name() + " :You're not channel operator\r\n";
     send(client.get_fd_client(), reply.c_str(), reply.size(), 0);
     return false;
 }
@@ -251,10 +257,11 @@ void send_in_chanel(std::vector<std::string> msg, Client client, Chanel chanel)
     std::vector<Client> user = chanel.get_user();
     for (size_t i = 0; i < user.size(); i++)
     {
-        if (client.get_nickname() == user[i].get_username())
+        if (client.get_nickname() == user[i].get_nickname())
         {
             for (size_t i = 0; i < user.size(); i++)
-                send_msg(client, msg, user[i].get_fd_client(), "PRIVMSG");
+                if (client.get_nickname() != user[i].get_nickname())
+                    send_msg(client, msg, user[i].get_fd_client(), "PRIVMSG");
             return ;
         }
     }
