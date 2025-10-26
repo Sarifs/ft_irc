@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:39:24 by asoumare          #+#    #+#             */
-/*   Updated: 2025/09/11 21:43:50 by marvin           ###   ########.fr       */
+/*   Updated: 2025/10/26 17:38:24 by marvin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ private:
     std::string ip;
     std::string nickname;
     std::string username;
-    std::string chanelname;
+    std::vector<std::string> chanelname;
     bool authenticated;
 public:
     Client(int fd_client, char *ip);
@@ -39,7 +39,7 @@ public:
     std::string get_ip(void);
     std::string get_username(void);
     std::string get_nickname(void);
-    std::string get_chanelname(void);
+    std::vector<std::string> get_chanelname(void);
     int get_fd_client(void);
     void set_username(std::string string);
     void set_nickname(std::string string);

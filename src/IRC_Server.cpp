@@ -169,6 +169,12 @@ void IRC_Serveur::run()
                     int bytes = recv(clients[i].get_fd_client(), buffer, sizeof(buffer) - 1, 0);
                     if (bytes <= 0)
                     {
+                        for (size_t p = 0; p < clients[i].get_chanelname().size(); p++)
+                        {
+                            std::string chanel_name = clients[i].get_chanelname()[p];
+                            Chanel *chanel_tmp = set_chanel(chanels, chanel_name, false, clients[i]);
+                            part_chanel(clients[i], chanel_tmp, chanel_name);
+                        }
                         std::cout << "Client déconnecté brutalement : " << clients[i].get_nickname() << std::endl;
                         close(clients[i].get_fd_client());
                         FD_CLR(clients[i].get_fd_client(), &master_set);
@@ -188,6 +194,13 @@ void IRC_Serveur::run()
                         switch (cmd)
                         {
                             case CMD_EXIT:
+                                for (size_t p = 0; p < clients[i].get_chanelname().size(); p++)
+                                {
+                                    std::string chanel_name = clients[i].get_chanelname()[p];
+                                    std::cout << chanel_name << std::endl;
+                                    Chanel *chanel_tmp = set_chanel(chanels, chanel_name, false, clients[i]);
+                                    part_chanel(clients[i], chanel_tmp, chanel_name);
+                                }
                                 send(clients[i].get_fd_client(), "vous vous etes deconecter !\n", 28, 0);
                                 std::cout << "Client déconnecté : " << clients[i].get_fd_client() << std::endl;
                                 close(clients[i].get_fd_client());
@@ -240,6 +253,13 @@ void IRC_Serveur::run()
                             {
                                 for (size_t p = 0; p < IRC.params.size(); p++)
                                 {
+                                    if (IRC.params[p][0] != '#')
+                                    {
+                                        std::string reply = ":server 407 " + clients[i].get_nickname() + " "
+                                                        + IRC.params[p] + " :chanel started by '#'\r\n";
+                                        send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
+                                        continue;
+                                    }
                                     Chanel *chanel_tmp = set_chanel(chanels, IRC.params[p], true, clients[i]);
                                     if (!chanel_tmp)
                                         continue;

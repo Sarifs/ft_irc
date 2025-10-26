@@ -38,7 +38,7 @@ public:
     //getter
 
     std::string get_name(void);
-    std::vector<Client> get_user();
+    std::vector<Client>& get_user();
     std::vector<std::string> get_conv();
     std::vector<std::string> get_modo();
     std::string get_mdp();

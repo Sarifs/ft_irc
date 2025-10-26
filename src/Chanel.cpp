@@ -31,7 +31,7 @@ std::string Chanel::get_name(void)
     return name;
 }
 
-std::vector<Client> Chanel::get_user(void)
+std::vector<Client>& Chanel::get_user(void)
 {
     return users;
 }
