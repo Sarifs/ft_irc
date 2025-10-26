@@ -87,31 +87,61 @@ void Chanel::add_modo(std::string name)
 
 void Chanel::del_chanel(void)
 {
-    name = "";
+    std::cout << "Suppression du channel " << name << std::endl;
+    name.clear();
+    users.clear();
+    modo.clear();
 }
-
 
 void Chanel::del_modo(std::string name)
 {
-    for (size_t i = 0; i < modo.size(); i++) {
-        if(name == modo[i])
-            modo[i] = "\0";
+    for (std::vector<std::string>::iterator it = modo.begin(); it != modo.end(); )
+    {
+        if (*it == name)
+            it = modo.erase(it);
+        else
+            ++it;
+    }
+
+    std::cout << "Taille des modos après suppression : " << modo.size() << std::endl;
+
+    if (modo.empty() && !users.empty())
+    {
+        modo.push_back(users[0].get_nickname());
+        std::cout << "Nouveau modo : " << users[0].get_nickname() << std::endl;
     }
 }
 
 void Chanel::del_user(std::string name)
 {
-    for (std::vector<Client>::iterator i = users.begin(); i != users.end(); )
+    bool was_modo = false;
+
+    for (size_t i = 0; i < modo.size(); ++i)
     {
-        if (i->get_nickname() == name)
-            i = users.erase(i);
-        else
-            ++i;
+        if (modo[i] == name)
+        {
+            was_modo = true;
+            break;
+        }
     }
+
+    for (std::vector<Client>::iterator it = users.begin(); it != users.end(); )
+    {
+        if (it->get_nickname() == name)
+            it = users.erase(it);
+        else
+            ++it;
+    }
+
+    if (users.empty())
+    {
+        del_chanel();
+        return;
+    }
+
+    if (was_modo)
+        del_modo(name);
 }
-
-
-
 
 // utiles
 
