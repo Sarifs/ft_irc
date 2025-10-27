@@ -67,4 +67,4 @@ public:
 
 };
 
-Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client user);
+Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client &user);

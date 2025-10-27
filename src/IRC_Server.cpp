@@ -98,16 +98,13 @@ void ft_bzero(IRCMessage &irc)
 {
     irc.command = "";
     irc.prefix = "";
-    irc.params[0] = "";
-    irc.params[1] = "";
-    irc.params[2] = "";
-    irc.params[3] = "";
+    irc.params.assign(4, "");
 }
 
 void leave_irc(int sig)
 {
     (void)sig;
-    std::cout << "Leave irccccccccccccccccc" << std::endl;
+    std::cout << "Leave irc" << std::endl;
 }
 
 void IRC_Serveur::run()

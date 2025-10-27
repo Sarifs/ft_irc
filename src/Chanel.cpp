@@ -145,7 +145,7 @@ void Chanel::del_user(std::string name)
 
 // utiles
 
-Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client user)
+Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, Client &user)
 {
     for (size_t i = 0; i < chanels.size(); i++)
     {
@@ -159,6 +159,7 @@ Chanel* set_chanel(std::vector<Chanel>& chanels, std::string name, bool create, 
         std::cout << "nouveau chanel cree" << std::endl;
         send(user.get_fd_client(), "vous avez cree un nouvaux chanel !\n", 35, 0);
         chanels.push_back(Chanel(name, user));
+        user.set_chanelname(name);
         return NULL;
     }
 

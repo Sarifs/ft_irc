@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Client.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/10/26 22:48:49 by marvin           ###   ########.fr       */
+/*   Updated: 2025/10/27 19:39:13 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,6 +174,10 @@ void join_chanel(Client &client, Chanel *chanel, std::string mdp) // ajoute les 
         chanel->add_user(client);
         send(client.get_fd_client(), "Vous avez rejoint le channel !\n", 32, 0);
         client.set_chanelname(chanel->get_name());
+        std::vector<std::string> test = client.get_chanelname();
+        for (size_t i = 0; i < test.size(); i++)
+            std::cout << test[i] << std::endl;
+
     }
 }
 
@@ -202,9 +206,12 @@ void part_chanel(Client &client, Chanel *chanel, const std::string &name)
 
             send(client.get_fd_client(), "Vous avez quitté le channel.\n", 31, 0);
             std::cout << "Client " << client.get_nickname() << " a quitté le channel " << name << std::endl;
-
+            
             if (chanel->get_user().empty())
+            {
+                // std::cout << "Client " << client.get_nickname() << " a quitté le channel " << name << std::endl;
                 chanel->del_chanel();
+            }
 
             return;
         }
