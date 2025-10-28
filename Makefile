@@ -13,7 +13,7 @@ OBJDIR      = obj
 # Compilateur & flags
 CXX         = c++
 CXXFLAGS    = -Wall -Wextra -Werror -std=c++98 -I$(INCDIR) -MMD -MP
-LDFLAGS     =
+LDFLAGS     += -no-pie   # ✅ Ajout ici
 
 # Sources / Objets / Dépendances (auto)
 SRCS        = $(wildcard $(SRCDIR)/*.cpp)
@@ -37,7 +37,6 @@ $(NAME): $(OBJS)
 	@$(CXX) $(OBJS) $(LDFLAGS) -o $(NAME)
 	@echo "$(GREEN)✅ Build OK : $(NAME)$(RESET)"
 
-# Compilation des .cpp -> .o (avec génération des .d)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(OBJDIR)
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -53,11 +52,9 @@ fclean: clean
 
 re: fclean all
 
-# Exécuter le binaire (facultatif)
 run: $(NAME)
 	@./$(NAME)
 
-# Inclure les dépendances générées (silencieusement si absentes)
 -include $(DEPS)
 
 .PHONY: all clean fclean re run
