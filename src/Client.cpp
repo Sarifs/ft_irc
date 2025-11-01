@@ -6,7 +6,7 @@
 /*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/15 20:47:47 by asoumare          #+#    #+#             */
-/*   Updated: 2025/10/27 19:39:13 by asoumare         ###   ########.fr       */
+/*   Updated: 2025/11/01 20:02:32 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -299,44 +299,74 @@ void send_action(Client client, int fd, std::string cmd, std::string dest, std::
 
 void mode_cmd(std::vector<std::string> cdm, Chanel *chanel)
 {
-    if (cdm[1][1] == 'i' && cdm[1][2] == '\0')
+    if (cdm.size() < 2)
+    {
+        std::cerr << "Erreur: commande MODE incomplète." << std::endl;
+        return;
+    }
+
+    const std::string &mode = cdm[1];
+    if (mode.size() < 2)
+    {
+        std::cerr << "Erreur: mode '" << mode << "' invalide." << std::endl;
+        return;
+    }
+
+    if (mode[1] == 'i' && mode.size() == 2)
     {
         std::cout << "mode i" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->chanel_only_invite(true);
-        if (cdm[1][0] == '-')
-            chanel->chanel_only_invite(false);
+        chanel->chanel_only_invite(mode[0] == '+');
     }
-    if (cdm[1][1] == 't' && cdm[1][2] == '\0')
+    else if (mode[1] == 't' && mode.size() == 2)
     {
         std::cout << "mode t" << std::endl;
-        if (cdm[1][0] == '+')
-            chanel->set_topic(true);
-        if (cdm[1][0] == '-')
-            chanel->set_topic(false);
+        chanel->set_topic(mode[0] == '+');
     }
-    if (cdm[1][1] == 'k' && cdm[1][2] == '\0')
+    else if (mode[1] == 'k' && mode.size() == 2)
     {
         std::cout << "mode k" << std::endl;
-        if (cdm[1][0] == '+')
+        if (mode[0] == '+')
+        {
+            if (cdm.size() < 3)
+            {
+                std::cerr << "Erreur: mot de passe manquant pour +k." << std::endl;
+                return;
+            }
             chanel->set_mdp(cdm[2]);
-        if (cdm[1][0] == '-')
+        }
+        else
             chanel->set_mdp("");
     }
-    if (cdm[1][1] == 'o' && cdm[1][2] == '\0')
+    else if (mode[1] == 'o' && mode.size() == 2)
     {
         std::cout << "mode o" << std::endl;
-        if (cdm[1][0] == '+')
+        if (cdm.size() < 3)
+        {
+            std::cerr << "Erreur: nom d'utilisateur manquant pour +o/-o." << std::endl;
+            return;
+        }
+        if (mode[0] == '+')
             chanel->add_modo(cdm[2]);
-        if (cdm[1][0] == '-')
+        else
             chanel->del_modo(cdm[2]);
     }
-    if (cdm[1][1] == 'l' && cdm[1][2] == '\0')
+    else if (mode[1] == 'l' && mode.size() == 2)
     {
         std::cout << "mode l" << std::endl;
-        if (cdm[1][0] == '+')
+        if (mode[0] == '+')
+        {
+            if (cdm.size() < 3)
+            {
+                std::cerr << "Erreur: limite manquante pour +l." << std::endl;
+                return;
+            }
             chanel->set_size(cdm[2]);
-        if (cdm[1][0] == '-')
+        }
+        else
             chanel->set_size("-1");
+    }
+    else
+    {
+        std::cerr << "Mode inconnu : " << mode << std::endl;
     }
 }

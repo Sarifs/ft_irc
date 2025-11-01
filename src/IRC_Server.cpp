@@ -56,31 +56,24 @@ Command parse_command(const char *buffer, Client client)
 
 IRC_Serveur::IRC_Serveur(int port, std::string pass) : passwold(pass)
 {
-    /* Socket creation */
     this->fd_server = socket(AF_INET,SOCK_STREAM,0);
     if (this->fd_server < 0)
     {
         std::cerr << "Error socket creation" << std::endl;
         exit(1);
     }
-    // facultatif permet la reconnexion immadiate sur le meme port apres une deconnexion avant le de TIME_WAIT
     int opt = 1;
     setsockopt(this->fd_server, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-            // Préparer l’adresse
     sockaddr_in addr;
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = inet_addr("127.0.0.1");// <- Puisque tout se fera en local ou  INADDR_ANY permet d'ecouter sur tous les ports;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     addr.sin_port = htons(port);
 
-    // bind associe le port et l'adresse ip avec le socket (fd)
-    // 127.0.0.1:6667"
     if (bind(this->fd_server, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
         std::cerr << "Error binding association failed" << std::endl;
         close(fd_server);
         exit(1);
     }
-    // listen transforme la socket en serveur 
-    // SOMAXCONN constant pour le nombre max de client autorise par l'os
     if (listen(this->fd_server, SOMAXCONN) < 0) {
         std::cerr << "Error listen" << std::endl;
         close(this->fd_server);
@@ -104,13 +97,12 @@ void ft_bzero(IRCMessage &irc)
 void leave_irc(int sig)
 {
     (void)sig;
-    std::cout << "Leave irc" << std::endl;
+    std::cout << "\nLeave irc" << std::endl;
 }
 
 void IRC_Serveur::run()
 {
     IRCMessage IRC;
-    IRC = parseIRCMessage("test 1 2 3 .");
     std::vector<Client> clients;
     std::vector<Chanel> chanels;
 
@@ -131,10 +123,7 @@ void IRC_Serveur::run()
     {
         read_set = master_set;
         if (select(max_fd + 1, &read_set, NULL, NULL, NULL) < 0)
-        {
-            std::cerr<< "select" << std::endl;
             break;
-        }
 
         for (size_t i = 0; i < clients.size(); i++)
         {
@@ -206,18 +195,19 @@ void IRC_Serveur::run()
                                 break;
 
                             case CMD_PING:
-                                send(clients[i].get_fd_client(), "PONG\n", 5, 0);
+                                send(clients[i].get_fd_client(), ":server PONG\n", 13, 0);
                                 break;
 
                             case CMD_PASS:
                             {
+                                if (clients[i].is_authenticated() == true) break;
                                 if (IRC.params[0] == this->get_password())
                                 {
                                     clients[i].set_authenticated(true);
                                     send(clients[i].get_fd_client(), "Mot de passe correct, vous pouvez continuer.\n", 45, 0);
                                 }
                                 else
-                                    send(clients[i].get_fd_client(), "Mot de passe incorrect, veillez reessayer.\n", 43, 0); // devrais quitter et fermer la co
+                                    send(clients[i].get_fd_client(), "Mot de passe incorrect, veillez reessayer.\n", 43, 0);
                                 break;
                             }
 
@@ -250,10 +240,9 @@ void IRC_Serveur::run()
                             {
                                 for (size_t p = 0; p < IRC.params.size(); p++)
                                 {
-                                    if (IRC.params[p][0] != '#')
+                                    if (IRC.params[p][0] != '#' || !IRC.params[p][1])
                                     {
-                                        std::string reply = ":server 407 " + clients[i].get_nickname() + " "
-                                                        + IRC.params[p] + " :chanel started by '#'\r\n";
+                                        std::string reply = ":server 407 " + clients[i].get_nickname() + " " + IRC.params[p] + " :chanel started by '#'\r\n";
                                         send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                         continue;
                                     }
@@ -272,8 +261,7 @@ void IRC_Serveur::run()
                                     Chanel *chanel_tmp = set_chanel(chanels, IRC.params[p], false, clients[i]);
                                     if (!chanel_tmp)
                                     {
-                                        std::string reply = ":server 403 " + clients[i].get_nickname() + " "
-                                                        + IRC.params[p] + " :No such channel\r\n";
+                                        std::string reply = ":server 403 " + clients[i].get_nickname() + " " + IRC.params[p] + " :No such channel\r\n";
                                         send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                         break;
                                     }
@@ -282,49 +270,58 @@ void IRC_Serveur::run()
                                 break;
                             }
 
-                            case CMD_PRIVMSG: // ne marche plus voir pour regler le probleme mais changer l'obj chanel
+                            case CMD_PRIVMSG:
                                 privmsg(clients, IRC.params, clients[i], chanels, IRC.command);
                                 break;
 
-                           case CMD_KICK:
+                            case CMD_KICK:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
                                 if (!chanel_tmp)
                                 {
-                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
-                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " " + IRC.params[0] + " :No such channel\r\n";
                                     send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                     break;
                                 }
-                                if (check_modo(chanel_tmp, clients[i]))
+
+                                if (!check_modo(chanel_tmp, clients[i]))
+                                    break;
+
+                                for (size_t p = 1; p < IRC.params.size(); ++p)
                                 {
-                                    for (size_t p = 1; p < IRC.params.size(); p++)
-                                        chanel_tmp->del_user(IRC.params[p]);
-                                    std::cout << "Client a retirer quelqu'un" << std::endl;
+                                    std::cout << "kick : " << IRC.params[p] << std::endl;
+                                    chanel_tmp->del_user(IRC.params[p]);
                                 }
+                                std::cout << "Client a retiré quelqu'un" << std::endl;
                                 break;
                             }
-                                
+
                             case CMD_INVITE:
                             {
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
                                 if (!chanel_tmp)
                                 {
-                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
-                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " " + IRC.params[0] + " :No such channel\r\n";
                                     send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                     break;
                                 }
-                                if (check_modo(chanel_tmp, clients[i]))
+
+                                if (!check_modo(chanel_tmp, clients[i]))
+                                    break;
+                                for (size_t j = 0; j < clients.size(); ++j)
                                 {
-                                    for (size_t i = 0; i < clients.size(); i++)
+                                    for (size_t p = 1; p < IRC.params.size(); ++p)
                                     {
-                                        for (size_t p = 1; p < IRC.params.size(); p++)
-                                            if (clients[i].get_username() == IRC.params[p])
-                                                chanel_tmp->add_user(clients[i]);
+                                        if (clients[j].get_nickname() == IRC.params[p])
+                                        {
+                                            chanel_tmp->add_user(clients[j]);
+                                            std::string msg = ":" + clients[i].get_nickname() + " INVITE " + clients[j].get_nickname() + " " + IRC.params[0] + "\r\n";
+                                            send(clients[j].get_fd_client(), msg.c_str(), msg.size(), 0);
+                                        }
                                     }
-                                    std::cout << "Client a invité quelqu'un" << std::endl;
                                 }
+
+                                std::cout << "Client a invité quelqu'un" << std::endl;
                                 break;
                             }
 
@@ -333,8 +330,7 @@ void IRC_Serveur::run()
                                 Chanel *chanel_tmp = set_chanel(chanels, IRC.params[0], false, clients[i]);
                                 if (!chanel_tmp)
                                 {
-                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " "
-                                                    + IRC.params[0] + " :No such channel\r\n";
+                                    std::string reply = ":server 403 " + clients[i].get_nickname() + " " + IRC.params[0] + " :No such channel\r\n";
                                     send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                     break;
                                 }
@@ -368,6 +364,8 @@ void IRC_Serveur::run()
                                     send(clients[i].get_fd_client(), reply.c_str(), reply.size(), 0);
                                     break;
                                 }
+                                if (IRC.params.size() == 1)
+                                    break;
                                 if (check_modo(chanel_tmp, clients[i]))
                                 {
                                     mode_cmd(IRC.params, chanel_tmp);
@@ -390,5 +388,5 @@ void IRC_Serveur::run()
 
 IRC_Serveur::~IRC_Serveur()
 {
-    std::cout << "test destruction" <<std::endl;   
+    std::cout << "destruction de tout" <<std::endl;   
 }

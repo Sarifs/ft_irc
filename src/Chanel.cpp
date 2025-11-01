@@ -132,7 +132,7 @@ void Chanel::del_user(std::string name)
         else
             ++it;
     }
-
+    
     if (users.empty())
     {
         del_chanel();

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: mdiomand <mdiomand@student.42.fr>          +#+  +:+       +#+        */
+/*   By: asoumare <asoumare@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/27 14:17:39 by idioumas          #+#    #+#             */
-/*   Updated: 2025/10/12 19:39:03 by mdiomand         ###   ########.fr       */
+/*   Updated: 2025/11/01 19:44:28 by asoumare         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <string>
 #include <stdexcept>
 #include <limits>
+#include <signal.h>
 
 
 
@@ -47,6 +48,7 @@ int main(int ac, char** av)
 
     int port = DEFAULT_PORT;
     std::string pass = DEFAULT_PASS;
+    signal(SIGPIPE, SIG_IGN);
 
     if (ac == 1) {
         // pas d'argument : on garde les valeurs par défaut
